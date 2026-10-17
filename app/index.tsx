@@ -6,28 +6,75 @@ import AppInput from '../src/components/ui/AppInput';
 import Screen from '../src/components/ui/Screen';
 import TaskCard from '../src/components/task/TaskCard';
 import TaskStats from '../src/components/task/TaskStats';
+import TaskFilterBar from '../src/components/task/TaskFilterBar';
 import EmptyState from '../src/components/ui/EmptyState';
 import { useTasks } from '../src/hooks/useTasks';
 import { useTheme } from '../src/hooks/useTheme';
 import {
   filterTasks,
+  filterTasksByStatus,
   getTaskStats,
   sortTasksByPriority,
 } from '../src/utils/task';
 import { spacing } from '../src/theme/spacing';
+import type { TaskStatusFilter } from '../src/types/task';
 
 export default function ListScreen() {
   const router = useRouter();
-  const { tasks, toggleTask } = useTasks();
+  const { tasks, toggleTaskStatus } = useTasks();
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<TaskStatusFilter>('all');
 
+  /** Статистика всегда по полному массиву — требование методички. */
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
 
-  const visibleTasks = useMemo(
-    () => sortTasksByPriority(filterTasks(tasks, query)),
-    [tasks, query],
-  );
+  /**
+   * Конвейер преобразований:
+   * tasks → сортировка по приоритету → поиск → фильтр по статусу.
+   * Все ступени — чистые функции из utils; экран только их склеивает.
+   */
+  const visibleTasks = useMemo(() => {
+    const sorted = sortTasksByPriority(tasks);
+    const searched = filterTasks(sorted, query);
+    return filter === 'all' ? searched : filterTasksByStatus(searched, filter);
+  }, [tasks, query, filter]);
+
+  /**
+   * Три варианта пустого состояния:
+   *  1. задач в принципе нет — приглашение добавить;
+   *  2. задачи есть, но поиск ничего не нашёл;
+   *  3. задачи есть, но фильтр по статусу пустой.
+   */
+  const emptyState = useMemo(() => {
+    if (tasks.length === 0) {
+      return (
+        <EmptyState
+          icon="clipboard-outline"
+          title="Задач пока нет"
+          description="Нажмите «+», чтобы добавить первую."
+          actionTitle="Добавить задачу"
+          onAction={() => router.push('/create')}
+        />
+      );
+    }
+    if (query.trim().length > 0) {
+      return (
+        <EmptyState
+          icon="search-outline"
+          title="Ничего не найдено"
+          description="Попробуйте изменить поисковый запрос."
+        />
+      );
+    }
+    return (
+      <EmptyState
+        icon="filter-outline"
+        title="В этой категории пусто"
+        description="Переключите фильтр, чтобы увидеть другие задачи."
+      />
+    );
+  }, [tasks.length, query, router]);
 
   return (
     <Screen padded={false}>
@@ -57,7 +104,7 @@ export default function ListScreen() {
           <TaskCard
             task={item}
             onPress={() => router.push(`/task/${item.id}`)}
-            onToggle={() => toggleTask(item.id)}
+            onToggle={() => toggleTaskStatus(item.id)}
           />
         )}
         ListHeaderComponent={
@@ -70,25 +117,10 @@ export default function ListScreen() {
                 placeholder="Поиск по названию или предмету"
               />
             </View>
+            <TaskFilterBar value={filter} onChange={setFilter} />
           </>
         }
-        ListEmptyComponent={
-          tasks.length === 0 ? (
-            <EmptyState
-              icon="clipboard-outline"
-              title="Задач пока нет"
-              description="Нажмите «+», чтобы добавить первую."
-              actionTitle="Добавить задачу"
-              onAction={() => router.push('/create')}
-            />
-          ) : (
-            <EmptyState
-              icon="search-outline"
-              title="Ничего не найдено"
-              description="Попробуйте изменить запрос."
-            />
-          )
-        }
+        ListEmptyComponent={emptyState}
         contentContainerStyle={styles.list}
       />
     </Screen>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../ui/AppButton';
 import AppInput from '../ui/AppInput';
@@ -9,17 +9,27 @@ import { spacing } from '../../theme/spacing';
 import type { CreateTaskInput, Task, TaskPriority } from '../../types/task';
 
 interface TaskFormProps {
-  /** Передано при редактировании */
-  initial?: Task;
+  /**
+   * Начальное заполнение формы.
+   * Для редактирования передаётся полный Task; для восстановления черновика — CreateTaskInput.
+   * Оба типа структурно совместимы: имеют title, subject, priority, dueDate.
+   */
+  initial?: Task | CreateTaskInput;
   submitLabel: string;
   onSubmit: (input: CreateTaskInput) => void;
+  /**
+   * Уведомляет родителя о каждом изменении полей.
+   * Используется экраном создания для сохранения черновика в AsyncStorage.
+   */
+  onChange?: (input: CreateTaskInput) => void;
 }
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
 /**
  * Проверка ISO-даты. Принимается любая строка, валидно разбирающаяся Date.
- * Возвращает канонический ISO-строковый вид или undefined (когда поле пустое).
+ * Возвращает канонический ISO-строковый вид, 'invalid' для некорректной даты,
+ * либо undefined для пустого ввода.
  */
 function parseDueDate(raw: string): string | undefined | 'invalid' {
   const trimmed = raw.trim();
@@ -29,7 +39,7 @@ function parseDueDate(raw: string): string | undefined | 'invalid' {
   return d.toISOString();
 }
 
-export default function TaskForm({ initial, submitLabel, onSubmit }: TaskFormProps) {
+export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: TaskFormProps) {
   const { colors } = useTheme();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [subject, setSubject] = useState(initial?.subject ?? '');
@@ -43,6 +53,23 @@ export default function TaskForm({ initial, submitLabel, onSubmit }: TaskFormPro
     subject?: string;
     dueDate?: string;
   }>({});
+
+  /**
+   * На каждое изменение полей уведомляем родителя текущим вводом.
+   * Невалидная дата в dueDate превращается в undefined — черновик хранит
+   * только осмысленные данные, «мусорный» ввод не сериализуется.
+   */
+  useEffect(() => {
+    if (!onChange) return;
+    const parsed = parseDueDate(dueDateRaw);
+    const dueDate = parsed === 'invalid' ? undefined : parsed ?? undefined;
+    onChange({
+      title,
+      subject,
+      priority,
+      dueDate,
+    });
+  }, [title, subject, priority, dueDateRaw, onChange]);
 
   const handleSubmit = () => {
     const cleanTitle = title.trim();

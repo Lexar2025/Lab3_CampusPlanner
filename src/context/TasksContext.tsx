@@ -1,6 +1,7 @@
 import { createContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CreateTaskInput, Task, UpdateTaskInput } from '../types/task';
+import { INITIAL_TASKS } from '../constants/initialTasks';
 
 export interface TasksContextValue {
   tasks: Task[];
@@ -17,7 +18,7 @@ const generateId = (): string =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 export function TasksProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
 
   const value = useMemo<TasksContextValue>(
     () => ({
