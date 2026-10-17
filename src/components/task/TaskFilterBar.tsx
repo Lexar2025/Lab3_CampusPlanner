@@ -17,6 +17,10 @@ const FILTERS: { value: TaskStatusFilter; label: string }[] = [
 /**
  * Сегментированный контроллер фильтра по статусу.
  * Доменный компонент (знает про TaskStatus), использует примитив AppButton.
+ *
+ * На узких экранах ширина кнопки получается небольшой, поэтому включаем
+ * `dense`-режим: меньше отступы, меньше шрифт, и подпись гарантированно
+ * не переносится (`numberOfLines={1}` в AppButton).
  */
 export default function TaskFilterBar({ value, onChange }: Props) {
   return (
@@ -26,8 +30,9 @@ export default function TaskFilterBar({ value, onChange }: Props) {
           key={f.value}
           title={f.label}
           variant={value === f.value ? 'primary' : 'secondary'}
+          dense
           onPress={() => onChange(f.value)}
-          style={styles.button}
+          style={styles.segment}
         />
       ))}
     </View>
@@ -37,12 +42,12 @@ export default function TaskFilterBar({ value, onChange }: Props) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
   },
-  button: {
+  segment: {
     flex: 1,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs, // перекрывает dense-отступ для ещё большей плотности
   },
 });

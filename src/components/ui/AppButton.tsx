@@ -9,6 +9,8 @@ interface AppButtonProps {
   onPress?: () => void;
   variant?: ButtonVariant;
   disabled?: boolean;
+  /** Плотный режим для сегмент-контролов: меньше отступы и шрифт, без переноса текста. */
+  dense?: boolean;
   style?: ViewStyle;
 }
 
@@ -17,6 +19,7 @@ export default function AppButton({
   onPress,
   variant = 'primary',
   disabled = false,
+  dense = false,
   style,
 }: AppButtonProps) {
   const { colors } = useTheme();
@@ -42,13 +45,18 @@ export default function AppButton({
       onPress={onPress}
       disabled={disabled}
       style={[
-        styles.button,
+        dense ? styles.buttonDense : styles.button,
         { backgroundColor: filledBg[variant], borderColor },
         disabled && styles.disabled,
         style,
       ]}
     >
-      <Text style={[styles.text, { color: textColor[variant] }]}>{title}</Text>
+      <Text
+        numberOfLines={1}
+        style={[dense ? styles.textDense : styles.text, { color: textColor[variant] }]}
+      >
+        {title}
+      </Text>
     </Pressable>
   );
 }
@@ -62,6 +70,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  buttonDense: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   text: { fontSize: 15, fontWeight: '700' },
+  textDense: { fontSize: 13, fontWeight: '700' },
   disabled: { opacity: 0.5 },
 });
