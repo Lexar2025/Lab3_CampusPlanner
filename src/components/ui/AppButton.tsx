@@ -1,21 +1,21 @@
-import { Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing } from '../../theme/spacing';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success';
+export type AppButtonVariant = 'primary' | 'secondary' | 'danger' | 'success';
 
 interface AppButtonProps {
-  title: string;
-  onPress?: () => void;
-  variant?: ButtonVariant;
+  label: string;
+  onPress: () => void;
+  variant?: AppButtonVariant;
   disabled?: boolean;
-  /** Плотный режим для сегмент-контролов: меньше отступы и шрифт, без переноса текста. */
   dense?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function AppButton({
-  title,
+  label,
   onPress,
   variant = 'primary',
   disabled = false,
@@ -24,61 +24,47 @@ export default function AppButton({
 }: AppButtonProps) {
   const { colors } = useTheme();
 
-  const filledBg: Record<ButtonVariant, string> = {
-    primary: colors.primary,
-    success: colors.success,
-    danger: colors.danger,
-    secondary: 'transparent',
-  };
+  const backgroundColor =
+    variant === 'secondary' ? colors.card
+    : variant === 'danger' ? colors.danger
+    : variant === 'success' ? colors.success
+    : colors.primary;
 
-  const textColor: Record<ButtonVariant, string> = {
-    primary: colors.onPrimary,
-    success: '#FFFFFF',
-    danger: '#FFFFFF',
-    secondary: colors.primary,
-  };
-
-  const borderColor = variant === 'secondary' ? colors.primary : 'transparent';
+  const borderColor = variant === 'secondary' ? colors.primary : backgroundColor;
+  const textColor = variant === 'secondary' ? colors.primary : colors.onPrimary;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={[
-        dense ? styles.buttonDense : styles.button,
-        { backgroundColor: filledBg[variant], borderColor },
+        styles.base,
+        dense ? styles.dense : styles.normal,
+        { backgroundColor, borderColor },
         disabled && styles.disabled,
         style,
       ]}
     >
       <Text
         numberOfLines={1}
-        style={[dense ? styles.textDense : styles.text, { color: textColor[variant] }]}
+        style={[dense ? styles.labelDense : styles.label, { color: textColor }]}
       >
-        {title}
+        {label}
       </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: spacing.md,
-    borderRadius: 12,
-    borderWidth: 2,
+  base: {
+    borderRadius: 10,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonDense: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: { fontSize: 15, fontWeight: '700' },
-  textDense: { fontSize: 13, fontWeight: '700' },
+  normal: { paddingVertical: spacing.sm + spacing.xs, paddingHorizontal: spacing.md },
+  dense: { paddingVertical: spacing.sm, paddingHorizontal: spacing.sm },
+  label: { fontSize: 15, fontWeight: '600' },
+  labelDense: { fontSize: 13, fontWeight: '600' },
   disabled: { opacity: 0.5 },
 });
