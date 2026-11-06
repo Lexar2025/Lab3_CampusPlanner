@@ -9,6 +9,7 @@ export interface Task {
   status: TaskStatus;
   createdAt: string; // ISO 8601
   dueDate?: string; // ISO 8601
+    description?: string;
 }
 
 /** Ввод пользователя при создании (без служебных полей) */

@@ -1,121 +1,68 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import AppButton from '../ui/AppButton';
+import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
 import AppInput from '../ui/AppInput';
-import Screen from '../ui/Screen';
 import { useTheme } from '../../hooks/useTheme';
-import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../theme/priority';
 import { spacing } from '../../theme/spacing';
-import type { CreateTaskInput, Task, TaskPriority } from '../../types/task';
+import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../theme/priority';
+import type { CreateTaskInput, TaskPriority } from '../../types/task';
 
-interface TaskFormProps {
-  /**
-   * Начальное заполнение формы.
-   * Для редактирования передаётся полный Task; для восстановления черновика — CreateTaskInput.
-   * Оба типа структурно совместимы: имеют title, subject, priority, dueDate.
-   */
-  initial?: Task | CreateTaskInput;
+interface Props {
+  initial?: CreateTaskInput;
   submitLabel: string;
   onSubmit: (input: CreateTaskInput) => void;
-  /**
-   * Уведомляет родителя о каждом изменении полей.
-   * Используется экраном создания для сохранения черновика в AsyncStorage.
-   */
   onChange?: (input: CreateTaskInput) => void;
 }
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
-/**
- * Проверка ISO-даты. Принимается любая строка, валидно разбирающаяся Date.
- * Возвращает канонический ISO-строковый вид, 'invalid' для некорректной даты,
- * либо undefined для пустого ввода.
- */
-function parseDueDate(raw: string): string | undefined | 'invalid' {
-  const trimmed = raw.trim();
-  if (!trimmed) return undefined;
-  const d = new Date(trimmed);
-  if (Number.isNaN(d.getTime())) return 'invalid';
-  return d.toISOString();
-}
-
-export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: TaskFormProps) {
+export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: Props) {
   const { colors } = useTheme();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [subject, setSubject] = useState(initial?.subject ?? '');
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? '');
   const [priority, setPriority] = useState<TaskPriority>(initial?.priority ?? 'medium');
-  const [dueDateRaw, setDueDateRaw] = useState(
-    initial?.dueDate ? new Date(initial.dueDate).toLocaleDateString('sv-SE') : '',
-  );
 
-  const [errors, setErrors] = useState<{
-    title?: string;
-    subject?: string;
-    dueDate?: string;
-  }>({});
-
-  /**
-   * На каждое изменение полей уведомляем родителя текущим вводом.
-   * Невалидная дата в dueDate превращается в undefined — черновик хранит
-   * только осмысленные данные, «мусорный» ввод не сериализуется.
-   */
   useEffect(() => {
-    if (!onChange) return;
-    const parsed = parseDueDate(dueDateRaw);
-    const dueDate = parsed === 'invalid' ? undefined : parsed ?? undefined;
-    onChange({
-      title,
-      subject,
-      priority,
-      dueDate,
-    });
-  }, [title, subject, priority, dueDateRaw, onChange]);
+    onChange?.({ title, subject, description, dueDate, priority });
+  }, [title, subject, description, dueDate, priority, onChange]);
 
   const handleSubmit = () => {
     const cleanTitle = title.trim();
     const cleanSubject = subject.trim();
-    const parsed = parseDueDate(dueDateRaw);
-
-    const nextErrors: typeof errors = {};
-    if (!cleanTitle) nextErrors.title = 'Название задачи не может быть пустым';
-    if (!cleanSubject) nextErrors.subject = 'Предмет не может быть пустым';
-    if (parsed === 'invalid') nextErrors.dueDate = 'Некорректная дата (пример: 2026-10-20)';
-
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
-    const input: CreateTaskInput = {
+    if (!cleanTitle) {
+      Alert.alert('Ошибка валидации', 'Название задачи не может быть пустым');
+      return;
+    }
+    if (!cleanSubject) {
+      Alert.alert('Ошибка валидации', 'Предмет не может быть пустым');
+      return;
+    }
+    onSubmit({
       title: cleanTitle,
       subject: cleanSubject,
       priority,
-      dueDate: parsed ?? undefined,
-    };
-    onSubmit(input);
+      description: description.trim() || undefined,
+      dueDate: dueDate.trim() || undefined,
+    });
   };
 
   return (
-    <Screen>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <AppInput label="Название задачи" value={title} onChangeText={setTitle} placeholder="Например: Лабораторная работа" />
+      <AppInput label="Предмет" value={subject} onChangeText={setSubject} placeholder="Например: Мобильная разработка" />
       <AppInput
-        label="Название задачи"
-        value={title}
-        onChangeText={(v) => {
-          setTitle(v);
-          if (errors.title) setErrors((e) => ({ ...e, title: undefined }));
-        }}
-        placeholder="Например: Лабораторная по мобильной разработке"
-        error={errors.title}
+        label="Описание (необязательно)"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Кратко о содержании задачи"
+        multiline
       />
-
       <AppInput
-        label="Предмет"
-        value={subject}
-        onChangeText={(v) => {
-          setSubject(v);
-          if (errors.subject) setErrors((e) => ({ ...e, subject: undefined }));
-        }}
-        placeholder="Например: Мобильная разработка"
-        error={errors.subject}
-        style={styles.fieldGap}
+        label="Срок (необязательно)"
+        value={dueDate}
+        onChangeText={setDueDate}
+        placeholder="ГГГГ-ММ-ДД"
       />
 
       <Text style={[styles.label, { color: colors.text }]}>Приоритет</Text>
@@ -134,12 +81,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.priorityText,
-                  { color: active ? '#FFFFFF' : PRIORITY_COLORS[p] },
-                ]}
-              >
+              <Text style={[styles.priorityText, { color: active ? '#FFFFFF' : PRIORITY_COLORS[p] }]}>
                 {PRIORITY_LABELS[p]}
               </Text>
             </Pressable>
@@ -147,35 +89,19 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
         })}
       </View>
 
-      <AppInput
-        label="Срок (необязательно)"
-        value={dueDateRaw}
-        onChangeText={(v) => {
-          setDueDateRaw(v);
-          if (errors.dueDate) setErrors((e) => ({ ...e, dueDate: undefined }));
-        }}
-        placeholder="ГГГГ-ММ-ДД, например 2026-10-20"
-        error={errors.dueDate}
-        autoCapitalize="none"
-        style={styles.fieldGap}
-      />
-
-      <AppButton title={submitLabel} onPress={handleSubmit} style={styles.submit} />
-    </Screen>
+      <Pressable onPress={handleSubmit} style={[styles.submit, { backgroundColor: colors.primary }]}>
+        <Text style={[styles.submitText, { color: colors.onPrimary }]}>{submitLabel}</Text>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 14, fontWeight: '600', marginTop: spacing.md, marginBottom: spacing.sm },
-  fieldGap: { marginTop: spacing.md },
-  priorityRow: { flexDirection: 'row', gap: spacing.sm },
-  priorityBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
+  container: { flex: 1, padding: spacing.md },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, marginTop: spacing.md },
+  priorityRow: { flexDirection: 'row', gap: 8 },
+  priorityBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 2, alignItems: 'center' },
   priorityText: { fontSize: 14, fontWeight: '600' },
-  submit: { marginTop: spacing.lg },
+  submit: { marginTop: spacing.lg, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  submitText: { fontSize: 16, fontWeight: '700' },
 });

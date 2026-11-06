@@ -20,7 +20,7 @@ export default function TaskFilterBar({ value, onChange }: Props) {
       {FILTERS.map((f) => (
         <AppButton
           key={f.value}
-          label={f.label}
+          title={f.label}
           variant={value === f.value ? 'primary' : 'secondary'}
           dense
           onPress={() => onChange(f.value)}
