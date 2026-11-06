@@ -5,25 +5,37 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import TaskCard from '../src/components/task/TaskCard';
 import TaskStats from '../src/components/task/TaskStats';
-import ProgressBar from '../src/components/task/ProgressBar';
+import TaskFilterBar from '../src/components/task/TaskFilterBar';
 import EmptyState from '../src/components/ui/EmptyState';
 import Screen from '../src/components/ui/Screen';
 import { useTasks } from '../src/hooks/useTasks';
 import { useTheme } from '../src/hooks/useTheme';
 import { spacing } from '../src/theme/spacing';
 import { filterTasks, getTaskStats, sortTasksByPriority } from '../src/utils/task';
+import type { TaskStatusFilter } from '../src/types/task';
 
 export default function ListScreen() {
   const router = useRouter();
   const { tasks, lastCreatedId, clearLastCreatedId } = useTasks();
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('all');
 
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
-  const visibleTasks = useMemo(
-    () => sortTasksByPriority(filterTasks(tasks, query)),
-    [tasks, query],
-  );
+
+  const visibleTasks = useMemo(() => {
+    // Сначала фильтр по статусу
+    let filtered = tasks;
+    if (statusFilter === 'active') {
+      filtered = tasks.filter((t) => t.status === 'active');
+    } else if (statusFilter === 'completed') {
+      filtered = tasks.filter((t) => t.status === 'completed');
+    }
+    // Потом фильтр по поиску
+    filtered = filterTasks(filtered, query);
+    // И сортировка
+    return sortTasksByPriority(filtered);
+  }, [tasks, query, statusFilter]);
 
   useEffect(() => {
     if (!lastCreatedId) return;
@@ -47,7 +59,6 @@ export default function ListScreen() {
           ),
         }}
       />
-
       <FlatList
         data={visibleTasks}
         keyExtractor={(item) => item.id}
@@ -59,7 +70,7 @@ export default function ListScreen() {
         ListHeaderComponent={
           <View>
             <TaskStats stats={stats} />
-            <ProgressBar completed={stats.completed} total={tasks.length} />
+            <TaskFilterBar value={statusFilter} onChange={setStatusFilter} />
             <View style={[styles.searchWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Ionicons name="search" size={18} color={colors.subtext} />
               <TextInput
@@ -85,9 +96,12 @@ export default function ListScreen() {
             <EmptyState
               icon="search-outline"
               title="Ничего не найдено"
-              description="Попробуйте изменить поисковый запрос."
+              description="Попробуйте изменить фильтры или поисковый запрос."
               actionTitle="Сбросить поиск"
-              onAction={() => setQuery('')}
+              onAction={() => {
+                setQuery('');
+                setStatusFilter('all');
+              }}
             />
           )
         }
