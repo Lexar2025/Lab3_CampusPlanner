@@ -160,7 +160,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
         style={styles.fieldGap}
       />
 
-      <AppButton title={submitLabel} onPress={handleSubmit} style={styles.submit} />
+      <AppButton label={submitLabel} onPress={handleSubmit} style={styles.submit} />
     </Screen>
   );
 }

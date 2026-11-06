@@ -32,7 +32,7 @@ export default function EmptyState({
       ) : null}
       {actionTitle && onAction ? (
         <View style={styles.button}>
-          <AppButton title={actionTitle} onPress={onAction} variant="secondary" />
+          <AppButton label={actionTitle} onPress={onAction} variant="secondary" />
         </View>
       ) : null}
     </View>

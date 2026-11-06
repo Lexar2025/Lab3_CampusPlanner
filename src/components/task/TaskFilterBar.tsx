@@ -32,6 +32,11 @@ export default function TaskFilterBar({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: spacing.xs },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
   segment: { flex: 1, paddingHorizontal: spacing.xs },
 });

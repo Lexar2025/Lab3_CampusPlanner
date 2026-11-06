@@ -104,21 +104,21 @@ export default function TaskDetailsScreen() {
       </View>
 
       <AppButton
-        title={isDone ? 'Вернуть в работу' : 'Отметить выполненной'}
+        label={isDone ? 'Вернуть в работу' : 'Отметить выполненной'}
         onPress={() => toggleTaskStatus(task.id)}
         variant={isDone ? 'secondary' : 'success'}
         style={styles.button}
       />
 
       <AppButton
-        title="Редактировать"
+        label="Редактировать"
         onPress={() => router.push(`/edit/${task.id}`)}
         variant="primary"
         style={styles.button}
       />
 
       <AppButton
-        title="Удалить"
+        label="Удалить"
         onPress={confirmDelete}
         variant="danger"
         style={styles.button}
