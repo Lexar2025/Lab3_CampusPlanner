@@ -1,7 +1,12 @@
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
+import Animated, {
+  FadeOut,
+  LinearTransition,
+  SlideInRight,
+} from 'react-native-reanimated';
 import AppInput from '../src/components/ui/AppInput';
 import Screen from '../src/components/ui/Screen';
 import TaskCard from '../src/components/task/TaskCard';
@@ -21,10 +26,19 @@ import type { TaskStatusFilter } from '../src/types/task';
 
 export default function ListScreen() {
   const router = useRouter();
-  const { tasks, toggleTaskStatus } = useTasks();
+  const { tasks, toggleTaskStatus, removeTask, lastCreatedId, clearLastCreated } = useTasks();
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TaskStatusFilter>('all');
+
+  /**
+   * Подсветка «успешного создания» (доп. задание ЛР №4) снимается
+   * после первого рендера, чтобы не срабатывать повторно.
+   */
+  useEffect(() => {
+    if (!lastCreatedId) return;
+    clearLastCreated();
+  }, [lastCreatedId, clearLastCreated]);
 
   /** Статистика всегда по полному массиву — требование методички. */
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
@@ -97,15 +111,38 @@ export default function ListScreen() {
         }}
       />
 
-      <FlatList
+      {/**
+        * FlatList обёрнут в каноничные layout-анимации Reanimated:
+        *  - skipEnteringExitingAnimations подавляет переигрывание entering/exiting
+        *    пунктов при mount/unmount самого списка (фриз react-native-screens
+        *    при уходе на другие экраны) — без него Android ловит ghost-карточки
+        *    и зависание UI-потока;
+        *  - itemLayoutAnimation — официальная анимация перестроения списка.
+        */}
+      <Animated.FlatList
         data={visibleTasks}
         keyExtractor={(item) => item.id}
+        skipEnteringExitingAnimations
+        itemLayoutAnimation={LinearTransition}
         renderItem={({ item }) => (
-          <TaskCard
-            task={item}
-            onPress={() => router.push(`/task/${item.id}`)}
-            onToggle={() => toggleTaskStatus(item.id)}
-          />
+          /**
+           * Сценарий 3: entering/exiting при создании и удалении записей
+           * (создание — SlideInRight, удаление — FadeOut). Exiting-анимация
+           * не мешает реальному удалению записи из состояния.
+           */
+          <Animated.View
+            entering={SlideInRight.springify().damping(17)}
+            exiting={FadeOut.duration(240)}
+          >
+            <TaskCard
+              task={item}
+              onPress={() => router.push(`/task/${item.id}`)}
+              onToggle={() => toggleTaskStatus(item.id)}
+              highlight={item.id === lastCreatedId}
+              onEdit={() => router.push(`/edit/${item.id}`)}
+              onDelete={() => removeTask(item.id)}
+            />
+          </Animated.View>
         )}
         ListHeaderComponent={
           <>
