@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import Animated, {
+  FadeInUp,
   FadeOut,
   LinearTransition,
   SlideInRight,
+  SlideOutDown,
 } from 'react-native-reanimated';
 import AppInput from '../src/components/ui/AppInput';
 import Screen from '../src/components/ui/Screen';
-import TaskCard from '../src/components/task/TaskCard';
+import SwipeableTaskCard from '../src/components/task/SwipeableTaskCard';
 import TaskStats from '../src/components/task/TaskStats';
 import TaskFilterBar from '../src/components/task/TaskFilterBar';
 import EmptyState from '../src/components/ui/EmptyState';
@@ -22,14 +24,32 @@ import {
   sortTasksByPriority,
 } from '../src/utils/task';
 import { spacing } from '../src/theme/spacing';
-import type { TaskStatusFilter } from '../src/types/task';
+import type { Task, TaskStatusFilter } from '../src/types/task';
+
+/** Доп. задание ЛР №5: время жизни кнопки «Отменить» после удаления. */
+const UNDO_VISIBLE_MS = 5000;
+
+/** Доп. задание ЛР №5: удалённая запись во временном состоянии (до конца сеанса). */
+interface UndoEntry {
+  task: Task;
+  /** Позиция записи в основном массиве tasks — по ней возвращаем при отмене. */
+  index: number;
+}
 
 export default function ListScreen() {
   const router = useRouter();
-  const { tasks, toggleTaskStatus, removeTask, lastCreatedId, clearLastCreated } = useTasks();
+  const { tasks, toggleTaskStatus, removeTask, restoreTask, lastCreatedId, clearLastCreated } =
+    useTasks();
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TaskStatusFilter>('all');
+
+  /**
+   * Доп. задание ЛР №5: последняя удалённая задача доступна для отмены.
+   * Хранится во временном состоянии до конца сеанса; через 5 секунд
+   * кнопка исчезает (exiting-анимация SlideOutDown).
+   */
+  const [undo, setUndo] = useState<UndoEntry | null>(null);
 
   /**
    * Подсветка «успешного создания» (доп. задание ЛР №4) снимается
@@ -39,6 +59,42 @@ export default function ListScreen() {
     if (!lastCreatedId) return;
     clearLastCreated();
   }, [lastCreatedId, clearLastCreated]);
+
+  /** Отсчёт 5 секунд для кнопки «Отменить»; сброс тоже анимирован. */
+  useEffect(() => {
+    if (!undo) return;
+    const timer = setTimeout(() => setUndo(null), UNDO_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [undo]);
+
+  /** Фактическое удаление после подтверждения + запись в undo-состояние. */
+  const commitDelete = (task: Task, index: number) => {
+    removeTask(task.id);
+    setUndo({ task, index });
+  };
+
+  /**
+   * ЛР №5: свайп влево не удаляет мгновенно — сначала подтверждение.
+   * Пока открыт Alert, карточка уже возвращается на исходную позицию
+   * (пружина в SwipeableTaskCard срабатывает в onEnd сразу после порога).
+   */
+  const requestDelete = (task: Task, index: number) => {
+    Alert.alert('Удалить задачу?', `«${task.title}» будет удалена.`, [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () => commitDelete(task, index),
+      },
+    ]);
+  };
+
+  /** Отмена последнего удаления: возврат записи на прежнюю позицию. */
+  const handleUndo = () => {
+    if (!undo) return;
+    restoreTask(undo.task, undo.index);
+    setUndo(null);
+  };
 
   /** Статистика всегда по полному массиву — требование методички. */
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
@@ -134,10 +190,20 @@ export default function ListScreen() {
             entering={SlideInRight.springify().damping(17)}
             exiting={FadeOut.duration(240)}
           >
-            <TaskCard
+            {/**
+             * ЛР №5: карточка обёрнута в свайп-жест:
+             *  - вправо — смена статуса записи;
+             *  - влево — подтверждение удаления;
+             *  - нажатие (onPress) по-прежнему открывает детали.
+             */}
+            <SwipeableTaskCard
               task={item}
               onPress={() => router.push(`/task/${item.id}`)}
               onToggle={() => toggleTaskStatus(item.id)}
+              onSwipeRight={() => toggleTaskStatus(item.id)}
+              onSwipeLeft={() =>
+                requestDelete(item, tasks.findIndex((t) => t.id === item.id))
+              }
               highlight={item.id === lastCreatedId}
               onEdit={() => router.push(`/edit/${item.id}`)}
               onDelete={() => removeTask(item.id)}
@@ -160,6 +226,31 @@ export default function ListScreen() {
         ListEmptyComponent={emptyState}
         contentContainerStyle={styles.list}
       />
+
+      {/**
+        * Доп. задание ЛР №5: кнопка «Отменить» после успешного удаления.
+        * Появляется/исчезает layout-анимациями; через 5 секунд снимается
+        * состояние — и экран Animated.View отыгрывает SlideOutDown.
+        * pointerEvents="box-none": прозрачная полоса не блокирует касания к списку.
+        */}
+      {undo ? (
+        <Animated.View
+          entering={FadeInUp.duration(260)}
+          exiting={SlideOutDown.duration(260)}
+          style={styles.undoBar}
+          pointerEvents="box-none"
+        >
+          <Pressable
+            onPress={handleUndo}
+            style={[styles.undoPill, { backgroundColor: colors.primary }]}
+          >
+            <Ionicons name="arrow-undo" size={18} color={colors.onPrimary} />
+            <Text numberOfLines={1} style={[styles.undoText, { color: colors.onPrimary }]}>
+              Отменить удаление
+            </Text>
+          </Pressable>
+        </Animated.View>
+      ) : null}
     </Screen>
   );
 }
@@ -169,4 +260,22 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   headerButtons: { flexDirection: 'row', alignItems: 'center' },
   headerGap: { marginLeft: spacing.md },
+  /** Доп. задание ЛР №5: плавающая кнопка «Отменить» внизу экрана. */
+  undoBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: spacing.md,
+    alignItems: 'center',
+  },
+  undoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+    maxWidth: '85%',
+  },
+  undoText: { fontSize: 14, fontWeight: '600' },
 });

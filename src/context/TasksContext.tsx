@@ -14,6 +14,11 @@ export interface TasksContextValue {
   updateTask: (id: string, input: UpdateTaskInput) => void;
   removeTask: (id: string) => void;
   toggleTaskStatus: (id: string) => void;
+  /**
+   * Доп. задание ЛР №5: возвращает ранее удалённую задачу на прежнюю позицию.
+   * Удалённая запись живёт во временном состоянии до конца сеанса.
+   */
+  restoreTask: (task: Task, index: number) => void;
   /** Снимает подсветку последней созданной записи. */
   clearLastCreated: () => void;
   getTaskById: (id: string) => Task | undefined;
@@ -52,6 +57,13 @@ export function TasksProvider({ children }: { children: ReactNode }) {
           prev.map((t) => (t.id === id ? { ...t, ...input } : t)),
         ),
       removeTask: (id) => setTasks((prev) => prev.filter((t) => t.id !== id)),
+      restoreTask: (task, index) =>
+        setTasks((prev) => {
+          const next = [...prev];
+          const at = Math.max(0, Math.min(index, next.length));
+          next.splice(at, 0, task);
+          return next;
+        }),
       toggleTaskStatus: (id) =>
         setTasks((prev) =>
           prev.map((t) =>
