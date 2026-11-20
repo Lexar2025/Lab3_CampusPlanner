@@ -167,14 +167,6 @@ export default function ListScreen() {
         }}
       />
 
-      {/**
-        * FlatList обёрнут в каноничные layout-анимации Reanimated:
-        *  - skipEnteringExitingAnimations подавляет переигрывание entering/exiting
-        *    пунктов при mount/unmount самого списка (фриз react-native-screens
-        *    при уходе на другие экраны) — без него Android ловит ghost-карточки
-        *    и зависание UI-потока;
-        *  - itemLayoutAnimation — официальная анимация перестроения списка.
-        */}
       <Animated.FlatList
         data={visibleTasks}
         keyExtractor={(item) => item.id}
@@ -190,12 +182,6 @@ export default function ListScreen() {
             entering={SlideInRight.springify().damping(17)}
             exiting={FadeOut.duration(240)}
           >
-            {/**
-             * ЛР №5: карточка обёрнута в свайп-жест:
-             *  - вправо — смена статуса записи;
-             *  - влево — подтверждение удаления;
-             *  - нажатие (onPress) по-прежнему открывает детали.
-             */}
             <SwipeableTaskCard
               task={item}
               onPress={() => router.push(`/task/${item.id}`)}
@@ -227,12 +213,6 @@ export default function ListScreen() {
         contentContainerStyle={styles.list}
       />
 
-      {/**
-        * Доп. задание ЛР №5: кнопка «Отменить» после успешного удаления.
-        * Появляется/исчезает layout-анимациями; через 5 секунд снимается
-        * состояние — и экран Animated.View отыгрывает SlideOutDown.
-        * pointerEvents="box-none": прозрачная полоса не блокирует касания к списку.
-        */}
       {undo ? (
         <Animated.View
           entering={FadeInUp.duration(260)}

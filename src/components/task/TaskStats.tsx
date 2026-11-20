@@ -18,12 +18,7 @@ export default function TaskStats({ stats }: TaskStatsProps) {
   const { colors } = useTheme();
   const percent =
     stats.total === 0 ? 0 : Math.round((stats.completed / stats.total) * 100);
-
-  /**
-   * Сценарий 4: анимированный индикатор прогресса.
-   * Значение — доля выполненных задач, ограниченная диапазоном 0..1,
-   * анимируется через withTiming. Источник данных — stats из состояния задач.
-   */
+    
   const ratio = stats.total === 0 ? 0 : Math.min(1, Math.max(0, stats.completed / stats.total));
   const progress = useSharedValue(ratio);
 

@@ -5,21 +5,12 @@ import { INITIAL_TASKS } from '../constants/initialTasks';
 
 export interface TasksContextValue {
   tasks: Task[];
-  /**
-   * id последней созданной задачи. Используется списком для анимации
-   * успешного создания (доп. задание ЛР №4); снимается методом clearLastCreated.
-   */
   lastCreatedId: string | null;
   createTask: (input: CreateTaskInput) => void;
   updateTask: (id: string, input: UpdateTaskInput) => void;
   removeTask: (id: string) => void;
   toggleTaskStatus: (id: string) => void;
-  /**
-   * Доп. задание ЛР №5: возвращает ранее удалённую задачу на прежнюю позицию.
-   * Удалённая запись живёт во временном состоянии до конца сеанса.
-   */
   restoreTask: (task: Task, index: number) => void;
-  /** Снимает подсветку последней созданной записи. */
   clearLastCreated: () => void;
   getTaskById: (id: string) => Task | undefined;
 }
