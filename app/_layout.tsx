@@ -30,11 +30,6 @@ function RootStack() {
 }
 
 export default function RootLayout() {
-  /**
-   * ЛР №5: корневой контейнер обработки жестов (GestureHandlerRootView).
-   * Без него GestureDetector-жесты не распознаются — контейнер должен
-   * охватывать всё приложение, включая все экраны навигатора.
-   */
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>

@@ -26,13 +26,11 @@ import {
 import { spacing } from '../src/theme/spacing';
 import type { Task, TaskStatusFilter } from '../src/types/task';
 
-/** Доп. задание ЛР №5: время жизни кнопки «Отменить» после удаления. */
+
 const UNDO_VISIBLE_MS = 5000;
 
-/** Доп. задание ЛР №5: удалённая запись во временном состоянии (до конца сеанса). */
 interface UndoEntry {
   task: Task;
-  /** Позиция записи в основном массиве tasks — по ней возвращаем при отмене. */
   index: number;
 }
 
@@ -43,41 +41,25 @@ export default function ListScreen() {
   const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TaskStatusFilter>('all');
-
-  /**
-   * Доп. задание ЛР №5: последняя удалённая задача доступна для отмены.
-   * Хранится во временном состоянии до конца сеанса; через 5 секунд
-   * кнопка исчезает (exiting-анимация SlideOutDown).
-   */
   const [undo, setUndo] = useState<UndoEntry | null>(null);
 
-  /**
-   * Подсветка «успешного создания» (доп. задание ЛР №4) снимается
-   * после первого рендера, чтобы не срабатывать повторно.
-   */
   useEffect(() => {
     if (!lastCreatedId) return;
     clearLastCreated();
   }, [lastCreatedId, clearLastCreated]);
 
-  /** Отсчёт 5 секунд для кнопки «Отменить»; сброс тоже анимирован. */
   useEffect(() => {
     if (!undo) return;
     const timer = setTimeout(() => setUndo(null), UNDO_VISIBLE_MS);
     return () => clearTimeout(timer);
   }, [undo]);
 
-  /** Фактическое удаление после подтверждения + запись в undo-состояние. */
   const commitDelete = (task: Task, index: number) => {
     removeTask(task.id);
     setUndo({ task, index });
   };
 
-  /**
-   * ЛР №5: свайп влево не удаляет мгновенно — сначала подтверждение.
-   * Пока открыт Alert, карточка уже возвращается на исходную позицию
-   * (пружина в SwipeableTaskCard срабатывает в onEnd сразу после порога).
-   */
+
   const requestDelete = (task: Task, index: number) => {
     Alert.alert('Удалить задачу?', `«${task.title}» будет удалена.`, [
       { text: 'Отмена', style: 'cancel' },
@@ -89,33 +71,19 @@ export default function ListScreen() {
     ]);
   };
 
-  /** Отмена последнего удаления: возврат записи на прежнюю позицию. */
   const handleUndo = () => {
     if (!undo) return;
     restoreTask(undo.task, undo.index);
     setUndo(null);
   };
 
-  /** Статистика всегда по полному массиву — требование методички. */
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
-
-  /**
-   * Конвейер преобразований:
-   * tasks → сортировка по приоритету → поиск → фильтр по статусу.
-   * Все ступени — чистые функции из utils; экран только их склеивает.
-   */
   const visibleTasks = useMemo(() => {
     const sorted = sortTasksByPriority(tasks);
     const searched = filterTasks(sorted, query);
     return filter === 'all' ? searched : filterTasksByStatus(searched, filter);
   }, [tasks, query, filter]);
 
-  /**
-   * Три варианта пустого состояния:
-   *  1. задач в принципе нет — приглашение добавить;
-   *  2. задачи есть, но поиск ничего не нашёл;
-   *  3. задачи есть, но фильтр по статусу пустой.
-   */
   const emptyState = useMemo(() => {
     if (tasks.length === 0) {
       return (
@@ -173,11 +141,6 @@ export default function ListScreen() {
         skipEnteringExitingAnimations
         itemLayoutAnimation={LinearTransition}
         renderItem={({ item }) => (
-          /**
-           * Сценарий 3: entering/exiting при создании и удалении записей
-           * (создание — SlideInRight, удаление — FadeOut). Exiting-анимация
-           * не мешает реальному удалению записи из состояния.
-           */
           <Animated.View
             entering={SlideInRight.springify().damping(17)}
             exiting={FadeOut.duration(240)}
@@ -240,7 +203,6 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   headerButtons: { flexDirection: 'row', alignItems: 'center' },
   headerGap: { marginLeft: spacing.md },
-  /** Доп. задание ЛР №5: плавающая кнопка «Отменить» внизу экрана. */
   undoBar: {
     position: 'absolute',
     left: 0,

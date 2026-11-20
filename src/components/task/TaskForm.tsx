@@ -9,28 +9,15 @@ import { spacing } from '../../theme/spacing';
 import type { CreateTaskInput, Task, TaskPriority } from '../../types/task';
 
 interface TaskFormProps {
-  /**
-   * Начальное заполнение формы.
-   * Для редактирования передаётся полный Task; для восстановления черновика — CreateTaskInput.
-   * Оба типа структурно совместимы: имеют title, subject, priority, dueDate.
-   */
+
   initial?: Task | CreateTaskInput;
   submitLabel: string;
   onSubmit: (input: CreateTaskInput) => void;
-  /**
-   * Уведомляет родителя о каждом изменении полей.
-   * Используется экраном создания для сохранения черновика в AsyncStorage.
-   */
   onChange?: (input: CreateTaskInput) => void;
 }
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
-/**
- * Проверка ISO-даты. Принимается любая строка, валидно разбирающаяся Date.
- * Возвращает канонический ISO-строковый вид, 'invalid' для некорректной даты,
- * либо undefined для пустого ввода.
- */
 function parseDueDate(raw: string): string | undefined | 'invalid' {
   const trimmed = raw.trim();
   if (!trimmed) return undefined;
@@ -54,11 +41,6 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
     dueDate?: string;
   }>({});
 
-  /**
-   * На каждое изменение полей уведомляем родителя текущим вводом.
-   * Невалидная дата в dueDate превращается в undefined — черновик хранит
-   * только осмысленные данные, «мусорный» ввод не сериализуется.
-   */
   useEffect(() => {
     if (!onChange) return;
     const parsed = parseDueDate(dueDateRaw);
