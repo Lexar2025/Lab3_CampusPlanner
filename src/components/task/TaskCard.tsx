@@ -24,21 +24,14 @@ interface TaskCardProps {
   task: Task;
   onPress: () => void;
   onToggle: () => void;
-  /**
-   * Доп. задание ЛР №4: флаг «только что созданной» задачи.
-   * Карточка появляется с небольшим смещением и кратко подсвечивается.
-   */
   highlight?: boolean;
-  /** Действия раскрытой карточки; отсутствующий обработчик не рисует кнопку. */
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-/** Пружина для анимации смены статуса. */
-const STATUS_SPRING = { damping: 15, stiffness: 170 };
-/** Пружина для входа «успешно созданной» карточки. */
-const CREATE_SPRING = { damping: 18, stiffness: 200 };
 
+const STATUS_SPRING = { damping: 15, stiffness: 170 };
+const CREATE_SPRING = { damping: 18, stiffness: 200 };
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const formatDueDate = (iso: string): string => {
@@ -65,21 +58,11 @@ export default function TaskCard({
   const isDone = task.status === 'completed';
   const overdue = isTaskOverdue(task);
 
-  /**
-   * Сценарий 1: анимированная смена статуса.
-   * Источник истины о статусе — task.status из контекста задач;
-   * SharedValue лишь отражает его, пружина срабатывает при изменении.
-   */
   const doneProgress = useSharedValue(isDone ? 1 : 0);
   useEffect(() => {
     doneProgress.value = withSpring(isDone ? 1 : 0, STATUS_SPRING);
   }, [isDone, doneProgress]);
 
-  /**
-   * Доп. задание: последовательная анимация успешного создания —
-   * вход со смещением (withSpring) и затем краткая подсветка
-   * (withDelay + withSequence). Выполняется один раз за жизнь карточки.
-   */
   const offsetY = useSharedValue(highlight ? 16 : 0);
   const glow = useSharedValue(0);
   const creationPlayed = useRef(false);
@@ -100,9 +83,8 @@ export default function TaskCard({
     }
   }, [highlight, offsetY, glow]);
 
-  /** Сценарий 2: раскрываемая область «Подробнее» (плавная видимость блока). */
+
   const [expanded, setExpanded] = useState(false);
-  /** Анимируемый тик для поворота шеврона; данные в блоке читаются из task. */
   const expandTick = useSharedValue(0);
 
   const toggleDetails = () => {
@@ -120,15 +102,15 @@ export default function TaskCard({
     ),
     transform: [{ translateY: offsetY.value }],
   }));
-  /** Плавная подкраска фона карточки при выполнении. */
+
   const tintStyle = useAnimatedStyle(() => ({
     opacity: interpolate(doneProgress.value, [0, 1], [0, 0.14], Extrapolation.CLAMP),
   }));
-  /** Краткая вспышка при успешном создании. */
+
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(glow.value, [0, 1], [0, 1], Extrapolation.CLAMP),
   }));
-  /** Иконка статуса «выпрыгивает» на пружине (overshoot сохранён). */
+
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(doneProgress.value, [0, 1], [0, 1]) }],
   }));
@@ -154,17 +136,14 @@ export default function TaskCard({
         cardStyle,
       ]}
     >
-      {/* Подкраска при выполнении (сценарий 1) */}
       <Animated.View
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.success }, tintStyle]}
       />
-      {/* Подсветка успешного создания (доп. задание) */}
       <Animated.View
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.primary }, glowStyle]}
       />
-
       <View style={styles.row}>
         <Pressable
           onPress={onToggle}
@@ -228,7 +207,6 @@ export default function TaskCard({
         </Pressable>
       </View>
 
-      {/* Раскрываемая область; появление/исчезновение через entering/exiting */}
       {expanded ? (
         <Animated.View
           entering={FadeIn.duration(280)}

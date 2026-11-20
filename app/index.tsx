@@ -31,35 +31,18 @@ export default function ListScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TaskStatusFilter>('all');
 
-  /**
-   * Подсветка «успешного создания» (доп. задание ЛР №4) снимается
-   * после первого рендера, чтобы не срабатывать повторно.
-   */
   useEffect(() => {
     if (!lastCreatedId) return;
     clearLastCreated();
   }, [lastCreatedId, clearLastCreated]);
 
-  /** Статистика всегда по полному массиву — требование методички. */
   const stats = useMemo(() => getTaskStats(tasks), [tasks]);
-
-  /**
-   * Конвейер преобразований:
-   * tasks → сортировка по приоритету → поиск → фильтр по статусу.
-   * Все ступени — чистые функции из utils; экран только их склеивает.
-   */
   const visibleTasks = useMemo(() => {
     const sorted = sortTasksByPriority(tasks);
     const searched = filterTasks(sorted, query);
     return filter === 'all' ? searched : filterTasksByStatus(searched, filter);
   }, [tasks, query, filter]);
 
-  /**
-   * Три варианта пустого состояния:
-   *  1. задач в принципе нет — приглашение добавить;
-   *  2. задачи есть, но поиск ничего не нашёл;
-   *  3. задачи есть, но фильтр по статусу пустой.
-   */
   const emptyState = useMemo(() => {
     if (tasks.length === 0) {
       return (
@@ -110,26 +93,12 @@ export default function ListScreen() {
           ),
         }}
       />
-
-      {/**
-        * FlatList обёрнут в каноничные layout-анимации Reanimated:
-        *  - skipEnteringExitingAnimations подавляет переигрывание entering/exiting
-        *    пунктов при mount/unmount самого списка (фриз react-native-screens
-        *    при уходе на другие экраны) — без него Android ловит ghost-карточки
-        *    и зависание UI-потока;
-        *  - itemLayoutAnimation — официальная анимация перестроения списка.
-        */}
       <Animated.FlatList
         data={visibleTasks}
         keyExtractor={(item) => item.id}
         skipEnteringExitingAnimations
         itemLayoutAnimation={LinearTransition}
         renderItem={({ item }) => (
-          /**
-           * Сценарий 3: entering/exiting при создании и удалении записей
-           * (создание — SlideInRight, удаление — FadeOut). Exiting-анимация
-           * не мешает реальному удалению записи из состояния.
-           */
           <Animated.View
             entering={SlideInRight.springify().damping(17)}
             exiting={FadeOut.duration(240)}
