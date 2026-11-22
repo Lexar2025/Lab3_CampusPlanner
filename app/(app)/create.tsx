@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TaskForm from '../src/components/task/TaskForm';
-import { useTasks } from '../src/hooks/useTasks';
-import { useTheme } from '../src/hooks/useTheme';
-import type { CreateTaskInput } from '../src/types/task';
+import TaskForm from '../../src/components/task/TaskForm';
+import { useTasks } from '../../src/hooks/useTasks';
+import { useTheme } from '../../src/hooks/useTheme';
+import type { CreateTaskInput } from '../../src/types/task';
 
 /**
  * Ключ в AsyncStorage для черновика формы создания.

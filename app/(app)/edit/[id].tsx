@@ -1,9 +1,9 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import TaskForm from '../../src/components/task/TaskForm';
-import EmptyState from '../../src/components/ui/EmptyState';
-import Screen from '../../src/components/ui/Screen';
-import { useTasks } from '../../src/hooks/useTasks';
-import type { CreateTaskInput } from '../../src/types/task';
+import TaskForm from '../../../src/components/task/TaskForm';
+import EmptyState from '../../../src/components/ui/EmptyState';
+import Screen from '../../../src/components/ui/Screen';
+import { useTasks } from '../../../src/hooks/useTasks';
+import type { CreateTaskInput } from '../../../src/types/task';
 
 export default function EditScreen() {
   const router = useRouter();

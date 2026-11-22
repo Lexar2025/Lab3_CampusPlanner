@@ -1,7 +1,7 @@
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import Screen from '../src/components/ui/Screen';
-import { useTheme } from '../src/hooks/useTheme';
-import { spacing } from '../src/theme/spacing';
+import Screen from '../../src/components/ui/Screen';
+import { useTheme } from '../../src/hooks/useTheme';
+import { spacing } from '../../src/theme/spacing';
 
 export default function SettingsScreen() {
   const { theme, colors, toggleTheme } = useTheme();

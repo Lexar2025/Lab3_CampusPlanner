@@ -1,14 +1,14 @@
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import AppButton from '../../src/components/ui/AppButton';
-import EmptyState from '../../src/components/ui/EmptyState';
-import Screen from '../../src/components/ui/Screen';
-import { useTasks } from '../../src/hooks/useTasks';
-import { useTheme } from '../../src/hooks/useTheme';
-import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../src/theme/priority';
-import { spacing } from '../../src/theme/spacing';
-import { isTaskOverdue } from '../../src/utils/task';
+import AppButton from '../../../src/components/ui/AppButton';
+import EmptyState from '../../../src/components/ui/EmptyState';
+import Screen from '../../../src/components/ui/Screen';
+import { useTasks } from '../../../src/hooks/useTasks';
+import { useTheme } from '../../../src/hooks/useTheme';
+import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../../src/theme/priority';
+import { spacing } from '../../../src/theme/spacing';
+import { isTaskOverdue } from '../../../src/utils/task';
 
 const formatDate = (iso: string): string =>
   new Date(iso).toLocaleString('ru-RU', {

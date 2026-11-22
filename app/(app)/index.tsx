@@ -9,22 +9,22 @@ import Animated, {
   SlideInRight,
   SlideOutDown,
 } from 'react-native-reanimated';
-import AppInput from '../src/components/ui/AppInput';
-import Screen from '../src/components/ui/Screen';
-import SwipeableTaskCard from '../src/components/task/SwipeableTaskCard';
-import TaskStats from '../src/components/task/TaskStats';
-import TaskFilterBar from '../src/components/task/TaskFilterBar';
-import EmptyState from '../src/components/ui/EmptyState';
-import { useTasks } from '../src/hooks/useTasks';
-import { useTheme } from '../src/hooks/useTheme';
+import AppInput from '../../src/components/ui/AppInput';
+import Screen from '../../src/components/ui/Screen';
+import SwipeableTaskCard from '../../src/components/task/SwipeableTaskCard';
+import TaskStats from '../../src/components/task/TaskStats';
+import TaskFilterBar from '../../src/components/task/TaskFilterBar';
+import EmptyState from '../../src/components/ui/EmptyState';
+import { useTasks } from '../../src/hooks/useTasks';
+import { useTheme } from '../../src/hooks/useTheme';
 import {
   filterTasks,
   filterTasksByStatus,
   getTaskStats,
   sortTasksByPriority,
-} from '../src/utils/task';
-import { spacing } from '../src/theme/spacing';
-import type { Task, TaskStatusFilter } from '../src/types/task';
+} from '../../src/utils/task';
+import { spacing } from '../../src/theme/spacing';
+import type { Task, TaskStatusFilter } from '../../src/types/task';
 
 
 const UNDO_VISIBLE_MS = 5000;
