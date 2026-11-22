@@ -1,13 +1,16 @@
 import { StyleSheet, Switch, Text, View } from 'react-native';
+import AppButton from '../../src/components/ui/AppButton';
 import Screen from '../../src/components/ui/Screen';
+import { useAuth } from '../../src/hooks/useAuth';
 import { useTheme } from '../../src/hooks/useTheme';
 import { spacing } from '../../src/theme/spacing';
 
 export default function SettingsScreen() {
   const { theme, colors, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   return (
-    <Screen>
+    <Screen style={styles.content}>
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.labels}>
           <Text style={[styles.title, { color: colors.text }]}>Тёмная тема</Text>
@@ -23,15 +26,34 @@ export default function SettingsScreen() {
         />
       </View>
 
+      {user ? (
+        <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.labels}>
+            <Text style={[styles.title, { color: colors.text }]}>{user.name}</Text>
+            <Text style={[styles.subtitle, { color: colors.subtext }]}>@{user.login}</Text>
+          </View>
+        </View>
+      ) : null}
+
+      <AppButton
+        label="Выйти"
+        variant="danger"
+        onPress={() => {
+          void signOut();
+        }}
+        style={styles.button}
+      />
+
       <Text style={[styles.hint, { color: colors.subtext }]}>
-        Выбор сохраняется в AsyncStorage и применяется при следующем запуске приложения.
-        Задачи хранятся в памяти приложения (согласно ТЗ ЛР3).
+        Выбор темы сохраняется в AsyncStorage и применяется при следующем запуске приложения.
+        Задачи хранятся в памяти приложения (согласно ТЗ ЛР3) и очищаются при выходе из аккаунта.
       </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { gap: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -43,5 +65,6 @@ const styles = StyleSheet.create({
   labels: { flex: 1, gap: spacing.xs },
   title: { fontSize: 16, fontWeight: '600' },
   subtitle: { fontSize: 13 },
-  hint: { fontSize: 13, marginTop: spacing.md, lineHeight: 18 },
+  button: { alignSelf: 'stretch' },
+  hint: { fontSize: 13, lineHeight: 18 },
 });
