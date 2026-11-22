@@ -18,6 +18,7 @@ interface AppInputProps {
   multiline?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  secureTextEntry?: boolean;
 }
 
 export default function AppInput({
@@ -30,6 +31,7 @@ export default function AppInput({
   multiline,
   autoCapitalize = 'sentences',
   keyboardType = 'default',
+  secureTextEntry = false,
 }: AppInputProps) {
   const { colors } = useTheme();
   const hasError = Boolean(error);
@@ -45,6 +47,7 @@ export default function AppInput({
         multiline={multiline}
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
         style={[
           styles.input,
           {
