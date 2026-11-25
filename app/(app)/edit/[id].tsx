@@ -1,18 +1,32 @@
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import TaskForm from '../../../src/components/task/TaskForm';
 import EmptyState from '../../../src/components/ui/EmptyState';
 import Screen from '../../../src/components/ui/Screen';
-import { useTasks } from '../../../src/hooks/useTasks';
+import { getErrorMessage, isUnauthorizedError } from '../../../src/api/client';
+import { ApiError } from '../../../src/api/http';
+import { useTaskQuery } from '../../../src/features/tasks/useTasksQuery';
+import { useUpdateTask } from '../../../src/features/tasks/useTaskMutations';
+import { useTheme } from '../../../src/hooks/useTheme';
+import { useState } from 'react';
 import type { CreateTaskInput } from '../../../src/types/task';
 
 export default function EditScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getTaskById, updateTask } = useTasks();
+  const { colors } = useTheme();
+  const taskQuery = useTaskQuery(id);
+  const updateMutation = useUpdateTask();
+  const [formError, setFormError] = useState<string | undefined>(undefined);
 
-  const task = id ? getTaskById(id) : undefined;
+  const task = taskQuery.data;
+  const notFound =
+    !id ||
+    (taskQuery.isError &&
+      taskQuery.error instanceof ApiError &&
+      taskQuery.error.status === 404);
 
-  if (!task) {
+  if (notFound) {
     return (
       <Screen>
         <EmptyState
@@ -26,10 +40,58 @@ export default function EditScreen() {
     );
   }
 
+  if (taskQuery.isPending) {
+    return (
+      <Screen>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (taskQuery.isError || !task) {
+    return (
+      <Screen>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Не удалось загрузить задачу"
+          description={getErrorMessage(taskQuery.error)}
+          actionTitle="Повторить"
+          onAction={() => {
+            void taskQuery.refetch();
+          }}
+        />
+      </Screen>
+    );
+  }
+
   const handleSubmit = (input: CreateTaskInput) => {
-    updateTask(task.id, input);
-    router.back();
+    setFormError(undefined);
+    updateMutation.mutate(
+      { id: task.id, input },
+      {
+        onSuccess: () => router.back(),
+        onError: (error) => {
+          if (!isUnauthorizedError(error)) {
+            setFormError(getErrorMessage(error));
+          }
+        },
+      },
+    );
   };
 
-  return <TaskForm initial={task} submitLabel="Сохранить изменения" onSubmit={handleSubmit} />;
+  return (
+    <TaskForm
+      initial={task}
+      submitLabel="Сохранить изменения"
+      onSubmit={handleSubmit}
+      submitting={updateMutation.isPending}
+      errorMessage={formError}
+    />
+  );
 }
+
+const styles = StyleSheet.create({
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});
