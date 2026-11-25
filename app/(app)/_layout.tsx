@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router';
-import { TasksProvider } from '../../src/context/TasksContext';
 import { TasksUiProvider } from '../../src/features/tasks/TasksUiContext';
 import { useTheme } from '../../src/hooks/useTheme';
 
@@ -26,10 +25,8 @@ function AppStack() {
 
 export default function AppLayout() {
   return (
-    <TasksProvider>
-      <TasksUiProvider>
-        <AppStack />
-      </TasksUiProvider>
-    </TasksProvider>
+    <TasksUiProvider>
+      <AppStack />
+    </TasksUiProvider>
   );
 }
