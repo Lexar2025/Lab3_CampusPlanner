@@ -8,7 +8,7 @@ import { useTasks } from '../../../src/hooks/useTasks';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../../src/theme/priority';
 import { spacing } from '../../../src/theme/spacing';
-import { isTaskOverdue } from '../../../src/utils/task';
+import { formatDateOnly, isTaskOverdue } from '../../../src/utils/task';
 
 const formatDate = (iso: string): string =>
   new Date(iso).toLocaleString('ru-RU', {
@@ -96,8 +96,16 @@ export default function TaskDetailsScreen() {
             color={overdue ? colors.danger : colors.subtext}
             label={
               overdue
-                ? `Просрочено: ${formatDate(task.dueDate)}`
-                : `Срок: ${formatDate(task.dueDate)}`
+                ? `Просрочено: ${formatDateOnly(task.dueDate, {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}`
+                : `Срок: ${formatDateOnly(task.dueDate, {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}`
             }
           />
         ) : null}

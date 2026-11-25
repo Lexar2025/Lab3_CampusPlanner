@@ -27,11 +27,61 @@ export function filterTasksByStatus(tasks: Task[], status: TaskStatus): Task[] {
   return tasks.filter((t) => t.status === status);
 }
 
-/** Задача просрочена, если dueDate в прошлом и задача ещё не выполнена */
+const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** Разбирает YYYY-MM-DD как локальную дату без сдвига часового пояса */
+export function parseDateOnly(value: string): Date | null {
+  const match = DATE_ONLY_PATTERN.exec(value.trim());
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+/** Форматирует YYYY-MM-DD; невалидную строку возвращает как есть */
+export function formatDateOnly(
+  value: string,
+  options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  },
+): string {
+  const date = parseDateOnly(value);
+  if (!date) return value;
+  return date.toLocaleDateString('ru-RU', options);
+}
+
+/** Задача просрочена, если срок закончился и задача ещё не выполнена */
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate) return false;
   if (task.status === 'completed') return false;
-  return new Date(task.dueDate).getTime() < Date.now();
+
+  const due = parseDateOnly(task.dueDate);
+  if (!due) return false;
+
+  const endOfDay = new Date(
+    due.getFullYear(),
+    due.getMonth(),
+    due.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  return endOfDay.getTime() < Date.now();
 }
 
 /** Бонус: поиск по title и subject (регистронезависимый) */

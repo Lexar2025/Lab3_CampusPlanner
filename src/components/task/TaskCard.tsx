@@ -16,7 +16,7 @@ import Animated, {
 import AppButton from '../ui/AppButton';
 import { useTheme } from '../../hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../theme/priority';
-import { isTaskOverdue } from '../../utils/task';
+import { formatDateOnly, isTaskOverdue } from '../../utils/task';
 import type { Task } from '../../types/task';
 import { spacing } from '../../theme/spacing';
 
@@ -36,10 +36,8 @@ const CREATE_SPRING = { damping: 18, stiffness: 200 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const formatDueDate = (iso: string): string => {
-  const d = new Date(iso);
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-};
+const formatDueDate = (date: string): string =>
+  formatDateOnly(date, { day: 'numeric', month: 'short' });
 
 const formatFullDate = (iso: string): string =>
   new Date(iso).toLocaleDateString('ru-RU', {
@@ -227,7 +225,13 @@ export default function TaskCard({
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.subtext }]}>Дедлайн</Text>
             <Text style={[styles.detailValue, { color: task.dueDate ? colors.text : colors.subtext }]}>
-              {task.dueDate ? formatFullDate(task.dueDate) : 'не задан'}
+              {task.dueDate
+                ? formatDateOnly(task.dueDate, {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })
+                : 'не задан'}
             </Text>
           </View>
           <View style={styles.detailRow}>

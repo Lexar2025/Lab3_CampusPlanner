@@ -7,32 +7,39 @@ import { useTheme } from '../../hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../theme/priority';
 import { spacing } from '../../theme/spacing';
 import type { CreateTaskInput, Task, TaskPriority } from '../../types/task';
+import { parseDateOnly } from '../../utils/task';
 
 interface TaskFormProps {
-
   initial?: Task | CreateTaskInput;
   submitLabel: string;
   onSubmit: (input: CreateTaskInput) => void;
   onChange?: (input: CreateTaskInput) => void;
+  submitting?: boolean;
+  errorMessage?: string;
 }
 
 const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
 
-function parseDueDate(raw: string): string | undefined | 'invalid' {
+function parseDueDate(raw: string): string | null | 'invalid' {
   const trimmed = raw.trim();
-  if (!trimmed) return undefined;
-  const d = new Date(trimmed);
-  if (Number.isNaN(d.getTime())) return 'invalid';
-  return d.toISOString();
+  if (!trimmed) return null;
+  return parseDateOnly(trimmed) ? trimmed : 'invalid';
 }
 
-export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: TaskFormProps) {
+export default function TaskForm({
+  initial,
+  submitLabel,
+  onSubmit,
+  onChange,
+  submitting = false,
+  errorMessage,
+}: TaskFormProps) {
   const { colors } = useTheme();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [subject, setSubject] = useState(initial?.subject ?? '');
   const [priority, setPriority] = useState<TaskPriority>(initial?.priority ?? 'medium');
   const [dueDateRaw, setDueDateRaw] = useState(
-    initial?.dueDate ? new Date(initial.dueDate).toLocaleDateString('sv-SE') : '',
+    initial?.dueDate ? initial.dueDate.slice(0, 10) : '',
   );
 
   const [errors, setErrors] = useState<{
@@ -44,7 +51,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
   useEffect(() => {
     if (!onChange) return;
     const parsed = parseDueDate(dueDateRaw);
-    const dueDate = parsed === 'invalid' ? undefined : parsed ?? undefined;
+    const dueDate = parsed === 'invalid' ? null : parsed;
     onChange({
       title,
       subject,
@@ -70,7 +77,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
       title: cleanTitle,
       subject: cleanSubject,
       priority,
-      dueDate: parsed ?? undefined,
+      dueDate: parsed === 'invalid' ? null : parsed,
     };
     onSubmit(input);
   };
@@ -86,6 +93,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
         }}
         placeholder="Например: Лабораторная по мобильной разработке"
         error={errors.title}
+        maxLength={120}
       />
 
       <AppInput
@@ -97,6 +105,7 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
         }}
         placeholder="Например: Мобильная разработка"
         error={errors.subject}
+        maxLength={80}
         style={styles.fieldGap}
       />
 
@@ -142,7 +151,16 @@ export default function TaskForm({ initial, submitLabel, onSubmit, onChange }: T
         style={styles.fieldGap}
       />
 
-      <AppButton label={submitLabel} onPress={handleSubmit} style={styles.submit} />
+      {errorMessage ? (
+        <Text style={[styles.formError, { color: colors.danger }]}>{errorMessage}</Text>
+      ) : null}
+
+      <AppButton
+        label={submitting ? 'Сохранение…' : submitLabel}
+        onPress={handleSubmit}
+        disabled={submitting}
+        style={styles.submit}
+      />
     </Screen>
   );
 }
@@ -159,5 +177,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   priorityText: { fontSize: 14, fontWeight: '600' },
+  formError: { fontSize: 13, marginTop: spacing.md, textAlign: 'center' },
   submit: { marginTop: spacing.lg },
 });

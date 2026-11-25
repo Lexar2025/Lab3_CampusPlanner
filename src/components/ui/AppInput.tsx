@@ -19,6 +19,7 @@ interface AppInputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   secureTextEntry?: boolean;
+  maxLength?: number;
 }
 
 export default function AppInput({
@@ -32,6 +33,7 @@ export default function AppInput({
   autoCapitalize = 'sentences',
   keyboardType = 'default',
   secureTextEntry = false,
+  maxLength,
 }: AppInputProps) {
   const { colors } = useTheme();
   const hasError = Boolean(error);
@@ -48,6 +50,7 @@ export default function AppInput({
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
+        maxLength={maxLength}
         style={[
           styles.input,
           {
