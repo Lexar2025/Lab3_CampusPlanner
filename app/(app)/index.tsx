@@ -33,6 +33,7 @@ import {
 import { useTheme } from '../../src/hooks/useTheme';
 import {
   filterTasks,
+  filterTasksByStatus,
   getTaskStats,
   sortTasksByPriority,
 } from '../../src/utils/task';
@@ -65,9 +66,15 @@ export default function ListScreen() {
 
   const visibleTasks = useMemo(() => {
     const withoutPending = tasks.filter((task) => !pendingIds.has(task.id));
-    const sorted = sortTasksByPriority(withoutPending);
+    // Сервер уже фильтрует, но локальный слой не даёт показать чужие
+    // placeholder-данные при смене фильтра и сразу скрывает переключённую задачу.
+    const byStatus =
+      statusFilter === 'all'
+        ? withoutPending
+        : filterTasksByStatus(withoutPending, statusFilter);
+    const sorted = sortTasksByPriority(byStatus);
     return filterTasks(sorted, searchQuery);
-  }, [tasks, pendingIds, searchQuery]);
+  }, [tasks, pendingIds, statusFilter, searchQuery]);
 
   const stats = useMemo(
     () => getTaskStats(allTasks.filter((task) => !pendingIds.has(task.id))),

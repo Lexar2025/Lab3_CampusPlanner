@@ -48,7 +48,7 @@ interface PendingEntry {
 }
 
 export function TasksUiProvider({ children }: { children: ReactNode }) {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, signOut } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? '';
 
@@ -88,7 +88,7 @@ export function TasksUiProvider({ children }: { children: ReactNode }) {
       if (!token) {
         throw new ApiError(NO_SESSION, 401);
       }
-      return deleteTask(id, token);
+      return deleteTask(id, token, signOut);
     },
     onSuccess: (_data, id) => {
       removePending(id);
@@ -153,12 +153,14 @@ export function TasksUiProvider({ children }: { children: ReactNode }) {
       for (const entry of Array.from(entries.values())) {
         clearTimeout(entry.timer);
         if (!entry.deleting && entry.token) {
-          void deleteTask(entry.task.id, entry.token).catch(() => undefined);
+          void deleteTask(entry.task.id, entry.token, signOut).catch(
+            () => undefined,
+          );
         }
       }
       entries.clear();
     };
-  }, []);
+  }, [signOut]);
 
   const isPending = useCallback((id: string) => pendingIds.has(id), [pendingIds]);
 
