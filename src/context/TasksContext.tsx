@@ -37,7 +37,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
             ...input,
             id,
             status: 'active',
+            dueDate: input.dueDate ?? null,
             createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
           ...prev,
         ]);

@@ -28,6 +28,7 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'high',
     status: 'active',
     createdAt: daysFromNow(-6),
+    updatedAt: daysFromNow(-6),
     dueDate: daysFromNow(2),
   },
   {
@@ -37,6 +38,7 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'medium',
     status: 'completed',
     createdAt: daysFromNow(-5),
+    updatedAt: daysFromNow(-5),
     dueDate: daysFromNow(-1),
   },
   {
@@ -46,6 +48,7 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'high',
     status: 'active',
     createdAt: daysFromNow(-4),
+    updatedAt: daysFromNow(-4),
     dueDate: daysFromNow(-3),
   },
   {
@@ -55,6 +58,8 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'low',
     status: 'active',
     createdAt: daysFromNow(-2),
+    updatedAt: daysFromNow(-2),
+    dueDate: null,
   },
   {
     id: 'seed-5',
@@ -63,6 +68,7 @@ export const INITIAL_TASKS: Task[] = [
     priority: 'medium',
     status: 'active',
     createdAt: daysFromNow(-1),
+    updatedAt: daysFromNow(-1),
     dueDate: daysFromNow(7),
   },
 ];
