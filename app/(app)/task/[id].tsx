@@ -1,10 +1,14 @@
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AppButton from '../../../src/components/ui/AppButton';
 import EmptyState from '../../../src/components/ui/EmptyState';
 import Screen from '../../../src/components/ui/Screen';
-import { useTasks } from '../../../src/hooks/useTasks';
+import { getErrorMessage, isUnauthorizedError } from '../../../src/api/client';
+import { ApiError } from '../../../src/api/http';
+import { useTasksUi } from '../../../src/features/tasks/TasksUiContext';
+import { useToggleTaskStatus } from '../../../src/features/tasks/useTaskMutations';
+import { useTaskQuery } from '../../../src/features/tasks/useTasksQuery';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../../src/theme/priority';
 import { spacing } from '../../../src/theme/spacing';
@@ -22,12 +26,19 @@ const formatDate = (iso: string): string =>
 export default function TaskDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getTaskById, toggleTaskStatus, removeTask } = useTasks();
   const { colors } = useTheme();
+  const taskQuery = useTaskQuery(id);
+  const toggleMutation = useToggleTaskStatus();
+  const { scheduleDelete } = useTasksUi();
 
-  const task = id ? getTaskById(id) : undefined;
+  const task = taskQuery.data;
+  const notFound =
+    !id ||
+    (taskQuery.isError &&
+      taskQuery.error instanceof ApiError &&
+      taskQuery.error.status === 404);
 
-  if (!task) {
+  if (notFound) {
     return (
       <Screen>
         <EmptyState
@@ -41,6 +52,49 @@ export default function TaskDetailsScreen() {
     );
   }
 
+  if (taskQuery.isPending) {
+    return (
+      <Screen>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (taskQuery.isError || !task) {
+    return (
+      <Screen>
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="Не удалось загрузить задачу"
+          description={getErrorMessage(taskQuery.error)}
+          actionTitle="Повторить"
+          onAction={() => {
+            void taskQuery.refetch();
+          }}
+        />
+      </Screen>
+    );
+  }
+
+  const isDone = task.status === 'completed';
+  const overdue = isTaskOverdue(task);
+
+  const handleToggle = () => {
+    if (toggleMutation.isPending) return;
+    toggleMutation.mutate(
+      { id: task.id, status: isDone ? 'active' : 'completed' },
+      {
+        onError: (error) => {
+          if (!isUnauthorizedError(error)) {
+            Alert.alert('Не удалось изменить статус', getErrorMessage(error));
+          }
+        },
+      },
+    );
+  };
+
   const confirmDelete = () => {
     Alert.alert('Удаление задачи', `Удалить задачу «${task.title}»?`, [
       { text: 'Отмена', style: 'cancel' },
@@ -48,15 +102,12 @@ export default function TaskDetailsScreen() {
         text: 'Удалить',
         style: 'destructive',
         onPress: () => {
-          removeTask(task.id);
+          scheduleDelete(task);
           router.back();
         },
       },
     ]);
   };
-
-  const isDone = task.status === 'completed';
-  const overdue = isTaskOverdue(task);
 
   return (
     <Screen>
@@ -112,8 +163,15 @@ export default function TaskDetailsScreen() {
       </View>
 
       <AppButton
-        label={isDone ? 'Вернуть в работу' : 'Отметить выполненной'}
-        onPress={() => toggleTaskStatus(task.id)}
+        label={
+          toggleMutation.isPending
+            ? 'Сохранение…'
+            : isDone
+              ? 'Вернуть в работу'
+              : 'Отметить выполненной'
+        }
+        onPress={handleToggle}
+        disabled={toggleMutation.isPending}
         variant={isDone ? 'secondary' : 'success'}
         style={styles.button}
       />
@@ -160,6 +218,7 @@ const detailStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: {
     padding: spacing.md,
     borderRadius: 14,
