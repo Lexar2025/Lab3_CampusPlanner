@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react';
 import { getCurrentUser, signIn as apiSignIn } from '../api/auth';
 import { ApiError } from '../api/http';
+import { queryClient } from '../api/queryClient';
 import type { LoginInput, User } from '../types/auth';
 import { readToken, removeToken, saveToken } from './authStorage';
 
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAccessToken(null);
     setAuthNotice(null);
+    queryClient.clear();
   }, []);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (credentials: LoginInput) => {
     const data = await apiSignIn(credentials);
     await saveToken(data.accessToken);
+    queryClient.clear();
     setAccessToken(data.accessToken);
     setUser(data.user);
     setAuthNotice(null);
@@ -103,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(null);
     setUser(null);
     setAuthNotice(null);
+    queryClient.clear();
   }, []);
 
   const value = useMemo<AuthContextValue>(
