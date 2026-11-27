@@ -24,6 +24,12 @@ import SwipeableTaskCard from '../../src/components/task/SwipeableTaskCard';
 import TaskStats from '../../src/components/task/TaskStats';
 import TaskFilterBar from '../../src/components/task/TaskFilterBar';
 import EmptyState from '../../src/components/ui/EmptyState';
+import TaskSectionHeader from '../../src/components/task/TaskSectionHeader';
+import {
+  groupTasksByDueDate,
+  buildTaskRows,
+  type TaskListRow,
+} from '../../src/utils/taskSections';
 import { useTasksUi } from '../../src/features/tasks/TasksUiContext';
 import { useToggleTaskStatus } from '../../src/features/tasks/useTaskMutations';
 import {
@@ -35,7 +41,6 @@ import {
   filterTasks,
   filterTasksByStatus,
   getTaskStats,
-  sortTasksByPriority,
 } from '../../src/utils/task';
 import { spacing } from '../../src/theme/spacing';
 import type { Task } from '../../src/types/task';
@@ -64,17 +69,20 @@ export default function ListScreen() {
   const tasks = useMemo(() => listQuery.data ?? [], [listQuery.data]);
   const allTasks = useMemo(() => allQuery.data ?? [], [allQuery.data]);
 
-  const visibleTasks = useMemo(() => {
+  const sections = useMemo(() => {
     const withoutPending = tasks.filter((task) => !pendingIds.has(task.id));
-    // Сервер уже фильтрует, но локальный слой не даёт показать чужие
-    // placeholder-данные при смене фильтра и сразу скрывает переключённую задачу.
     const byStatus =
       statusFilter === 'all'
         ? withoutPending
         : filterTasksByStatus(withoutPending, statusFilter);
-    const sorted = sortTasksByPriority(byStatus);
-    return filterTasks(sorted, searchQuery);
+    return groupTasksByDueDate(filterTasks(byStatus, searchQuery), statusFilter);
   }, [tasks, pendingIds, statusFilter, searchQuery]);
+
+  const rows = useMemo(() => buildTaskRows(sections), [sections]);
+  const visibleTasks = useMemo(
+    () => sections.flatMap((section) => section.tasks),
+    [sections],
+  );
 
   const stats = useMemo(
     () => getTaskStats(allTasks.filter((task) => !pendingIds.has(task.id))),
@@ -201,9 +209,9 @@ export default function ListScreen() {
         }}
       />
 
-      <Animated.FlatList
-        data={visibleTasks}
-        keyExtractor={(item) => item.id}
+      <Animated.FlatList<TaskListRow>
+        data={rows}
+        keyExtractor={(item) => item.key}
         skipEnteringExitingAnimations
         itemLayoutAnimation={LinearTransition}
         refreshControl={
@@ -214,23 +222,34 @@ export default function ListScreen() {
             colors={[colors.primary]}
           />
         }
-        renderItem={({ item }) => (
-          <Animated.View
-            entering={SlideInRight.springify().damping(17)}
-            exiting={FadeOut.duration(240)}
-          >
-            <SwipeableTaskCard
-              task={item}
-              onPress={() => router.push(`/task/${item.id}`)}
-              onToggle={() => handleToggle(item)}
-              onSwipeRight={() => handleToggle(item)}
-              onSwipeLeft={() => requestDelete(item)}
-              highlight={item.id === lastCreatedId}
-              onEdit={() => router.push(`/edit/${item.id}`)}
-              onDelete={() => requestDelete(item)}
-            />
-          </Animated.View>
-        )}
+        renderItem={({ item }) => {
+          if (item.kind === 'section') {
+            return (
+              <TaskSectionHeader
+                title={item.title}
+                count={item.count}
+                overdue={item.overdue}
+              />
+            );
+          }
+          return (
+            <Animated.View
+              entering={SlideInRight.springify().damping(17)}
+              exiting={FadeOut.duration(240)}
+            >
+              <SwipeableTaskCard
+                task={item.task}
+                onPress={() => router.push(`/task/${item.task.id}`)}
+                onToggle={() => handleToggle(item.task)}
+                onSwipeRight={() => handleToggle(item.task)}
+                onSwipeLeft={() => requestDelete(item.task)}
+                highlight={item.task.id === lastCreatedId}
+                onEdit={() => router.push(`/edit/${item.task.id}`)}
+                onDelete={() => requestDelete(item.task)}
+              />
+            </Animated.View>
+          );
+        }}
         ListHeaderComponent={
           <>
             {hasDataError ? (
