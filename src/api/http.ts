@@ -6,7 +6,6 @@ export const API_BASE_URL: string =
   (process.env.EXPO_PUBLIC_API_URL ?? '').trim().replace(/\/+$/, '') ||
   DEFAULT_API_BASE_URL;
 
-/** Ошибка обращения к Campus API; status = null для сетевой ошибки */
 export class ApiError extends Error {
   readonly status: number | null;
 
@@ -17,7 +16,6 @@ export class ApiError extends Error {
   }
 }
 
-/** Читает сообщение из JSON-тела ошибки, иначе возвращает общий текст */
 export async function readErrorMessage(response: Response): Promise<string> {
   try {
     const data = (await response.json()) as Partial<ApiErrorResponse> | null;
@@ -31,11 +29,6 @@ export async function readErrorMessage(response: Response): Promise<string> {
   return `Ошибка сервера (${response.status}).`;
 }
 
-/**
- * Запрос к Campus API с токеном.
- * onUnauthorized вызывается только при HTTP 401; сетевые исключения
- * пробрасываются дальше без вызова колбэка.
- */
 export async function authorizedFetch(
   path: string,
   token: string,

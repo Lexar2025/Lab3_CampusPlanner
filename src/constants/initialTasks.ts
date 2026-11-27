@@ -2,24 +2,9 @@ import type { Task } from '../types/task';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/**
- * Дата относительно «сейчас»:
- *   daysFromNow(-3) — три дня назад
- *   daysFromNow( 2) — через два дня
- * Возвращает ISO-строку — тот же формат, что хранит createdAt.
- */
 const daysFromNow = (days: number): string =>
   new Date(Date.now() + days * DAY_MS).toISOString();
 
-/**
- * 5 демо-задач, покрывающих все ветки UI:
- *   - два разных статуса (active / completed)
- *   - все три приоритета
- *   - просроченная активная задача  → подсветка overdue
- *   - выполненная задача с прошедшим сроком → НЕ просрочена (демонстрация правила)
- *   - задача без dueDate              → опциональное поле работает
- *   - несколько будущих сроков        → видно «осталось N дней»
- */
 export const INITIAL_TASKS: Task[] = [
   {
     id: 'seed-1',

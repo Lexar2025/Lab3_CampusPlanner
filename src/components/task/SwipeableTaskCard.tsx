@@ -40,6 +40,7 @@ export default function SwipeableTaskCard({
   onEdit,
   onDelete,
 }: SwipeableTaskCardProps) {
+  
   const { colors } = useTheme();
   const isDone = task.status === 'completed';
   const translateX = useSharedValue(0);

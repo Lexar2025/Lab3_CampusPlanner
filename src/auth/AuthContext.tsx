@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error instanceof ApiError && error.status === 401) {
           await clearSessionOn401();
         } else {
-          // Сеть или 5xx: токен сохраняем, чтобы сессия восстановилась позже.
           setAuthNotice(SESSION_CHECK_ERROR);
         }
       } finally {
