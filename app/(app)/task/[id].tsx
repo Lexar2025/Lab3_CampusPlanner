@@ -1,27 +1,21 @@
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AppButton from '../../../src/components/ui/AppButton';
-import EmptyState from '../../../src/components/ui/EmptyState';
 import Screen from '../../../src/components/ui/Screen';
 import { getErrorMessage, isUnauthorizedError } from '../../../src/api/client';
-import { ApiError } from '../../../src/api/http';
 import { useTasksUi } from '../../../src/features/tasks/TasksUiContext';
 import { useToggleTaskStatus } from '../../../src/features/tasks/useTaskMutations';
 import { useTaskQuery } from '../../../src/features/tasks/useTasksQuery';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../../src/theme/priority';
 import { spacing } from '../../../src/theme/spacing';
-import { formatDateOnly, isTaskOverdue } from '../../../src/utils/task';
-
-const formatDate = (iso: string): string =>
-  new Date(iso).toLocaleString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+import {
+  formatDateOnly,
+  formatIsoDateTime,
+  isTaskOverdue,
+} from '../../../src/utils/task';
+import TaskQueryGate from '../../../src/components/task/TaskQueryGate';
 
 export default function TaskDetailsScreen() {
   const router = useRouter();
@@ -31,165 +25,139 @@ export default function TaskDetailsScreen() {
   const toggleMutation = useToggleTaskStatus();
   const { scheduleDelete } = useTasksUi();
 
-  const task = taskQuery.data;
-  const notFound =
-    !id ||
-    (taskQuery.isError &&
-      taskQuery.error instanceof ApiError &&
-      taskQuery.error.status === 404);
-
-  if (notFound) {
-    return (
-      <Screen>
-        <EmptyState
-          icon="alert-circle-outline"
-          title="Задача не найдена"
-          description="Возможно, она была удалена."
-          actionTitle="Назад к списку"
-          onAction={() => router.back()}
-        />
-      </Screen>
-    );
-  }
-
-  if (taskQuery.isPending) {
-    return (
-      <Screen>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </Screen>
-    );
-  }
-
-  if (taskQuery.isError || !task) {
-    return (
-      <Screen>
-        <EmptyState
-          icon="cloud-offline-outline"
-          title="Не удалось загрузить задачу"
-          description={getErrorMessage(taskQuery.error)}
-          actionTitle="Повторить"
-          onAction={() => {
-            void taskQuery.refetch();
-          }}
-        />
-      </Screen>
-    );
-  }
-
-  const isDone = task.status === 'completed';
-  const overdue = isTaskOverdue(task);
-
-  const handleToggle = () => {
-    if (toggleMutation.isPending) return;
-    toggleMutation.mutate(
-      { id: task.id, status: isDone ? 'active' : 'completed' },
-      {
-        onError: (error) => {
-          if (!isUnauthorizedError(error)) {
-            Alert.alert('Не удалось изменить статус', getErrorMessage(error));
-          }
-        },
-      },
-    );
-  };
-
-  const confirmDelete = () => {
-    Alert.alert('Удаление задачи', `Удалить задачу «${task.title}»?`, [
-      { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Удалить',
-        style: 'destructive',
-        onPress: () => {
-          scheduleDelete(task);
-          router.back();
-        },
-      },
-    ]);
-  };
-
   return (
-    <Screen>
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{task.title}</Text>
+    <TaskQueryGate
+      id={id}
+      query={taskQuery}
+      onBack={() => router.back()}
+    >
+      {(task) => {
+        const isDone = task.status === 'completed';
+        const overdue = isTaskOverdue(task);
 
-        <DetailRow
-          icon="book-outline"
-          color={colors.subtext}
-          label={task.subject}
-        />
+        const handleToggle = () => {
+          if (toggleMutation.isPending) return;
+          toggleMutation.mutate(
+            { id: task.id, status: isDone ? 'active' : 'completed' },
+            {
+              onError: (error) => {
+                if (!isUnauthorizedError(error)) {
+                  Alert.alert(
+                    'Не удалось изменить статус',
+                    getErrorMessage(error),
+                  );
+                }
+              },
+            },
+          );
+        };
 
-        <View style={styles.row}>
-          <Ionicons name="flag-outline" size={18} color={colors.subtext} />
-          <View
-            style={[styles.badge, { backgroundColor: PRIORITY_COLORS[task.priority] }]}
-          >
-            <Text style={styles.badgeText}>{PRIORITY_LABELS[task.priority]}</Text>
-          </View>
-        </View>
+        const confirmDelete = () => {
+          Alert.alert('Удаление задачи', `Удалить задачу «${task.title}»?`, [
+            { text: 'Отмена', style: 'cancel' },
+            {
+              text: 'Удалить',
+              style: 'destructive',
+              onPress: () => {
+                scheduleDelete(task);
+                router.back();
+              },
+            },
+          ]);
+        };
 
-        <DetailRow
-          icon={isDone ? 'checkmark-circle' : 'time-outline'}
-          color={isDone ? colors.success : colors.subtext}
-          label={isDone ? 'Выполнена' : 'В работе'}
-        />
+        return (
+          <Screen>
+            <View style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                {task.title}
+              </Text>
 
-        <DetailRow
-          icon="calendar-outline"
-          color={colors.subtext}
-          label={`Создана: ${formatDate(task.createdAt)}`}
-        />
+              <DetailRow
+                icon="book-outline"
+                color={colors.subtext}
+                label={task.subject}
+              />
 
-        {task.dueDate ? (
-          <DetailRow
-            icon={overdue ? 'warning' : 'alarm-outline'}
-            color={overdue ? colors.danger : colors.subtext}
-            label={
-              overdue
-                ? `Просрочено: ${formatDateOnly(task.dueDate, {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}`
-                : `Срок: ${formatDateOnly(task.dueDate, {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}`
-            }
-          />
-        ) : null}
-      </View>
+              <View style={styles.row}>
+                <Ionicons name="flag-outline" size={18} color={colors.subtext} />
+                <View style={[
+                  styles.badge,
+                  { backgroundColor: PRIORITY_COLORS[task.priority] },
+                ]}>
+                  <Text style={styles.badgeText}>
+                    {PRIORITY_LABELS[task.priority]}
+                  </Text>
+                </View>
+              </View>
 
-      <AppButton
-        label={
-          toggleMutation.isPending
-            ? 'Сохранение…'
-            : isDone
-              ? 'Вернуть в работу'
-              : 'Отметить выполненной'
-        }
-        onPress={handleToggle}
-        disabled={toggleMutation.isPending}
-        variant={isDone ? 'secondary' : 'success'}
-        style={styles.button}
-      />
+              <DetailRow
+                icon={isDone ? 'checkmark-circle' : 'time-outline'}
+                color={isDone ? colors.success : colors.subtext}
+                label={isDone ? 'Выполнена' : 'В работе'}
+              />
 
-      <AppButton
-        label="Редактировать"
-        onPress={() => router.push(`/edit/${task.id}`)}
-        variant="primary"
-        style={styles.button}
-      />
+              <DetailRow
+                icon="calendar-outline"
+                color={colors.subtext}
+                label={`Создана: ${formatIsoDateTime(task.createdAt)}`}
+              />
 
-      <AppButton
-        label="Удалить"
-        onPress={confirmDelete}
-        variant="danger"
-        style={styles.button}
-      />
-    </Screen>
+              {task.dueDate ? (
+                <DetailRow
+                  icon={overdue ? 'warning' : 'alarm-outline'}
+                  color={overdue ? colors.danger : colors.subtext}
+                  label={
+                    overdue
+                      ? `Просрочено: ${formatDateOnly(task.dueDate, {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}`
+                      : `Срок: ${formatDateOnly(task.dueDate, {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}`
+                  }
+                />
+              ) : null}
+            </View>
+
+            <AppButton
+              label={
+                toggleMutation.isPending
+                  ? 'Сохранение…'
+                  : isDone
+                    ? 'Вернуть в работу'
+                    : 'Отметить выполненной'
+              }
+              onPress={handleToggle}
+              disabled={toggleMutation.isPending}
+              variant={isDone ? 'secondary' : 'success'}
+              style={styles.button}
+            />
+
+            <AppButton
+              label="Редактировать"
+              onPress={() => router.push(`/edit/${task.id}`)}
+              variant="primary"
+              style={styles.button}
+            />
+
+            <AppButton
+              label="Удалить"
+              onPress={confirmDelete}
+              variant="danger"
+              style={styles.button}
+            />
+          </Screen>
+        );
+      }}
+    </TaskQueryGate>
   );
 }
 
@@ -218,7 +186,6 @@ const detailStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: {
     padding: spacing.md,
     borderRadius: 14,

@@ -16,7 +16,7 @@ import Animated, {
 import AppButton from '../ui/AppButton';
 import { useTheme } from '../../hooks/useTheme';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '../../theme/priority';
-import { formatDateOnly, isTaskOverdue } from '../../utils/task';
+import { formatDateOnly, formatIsoDate, isTaskOverdue } from '../../utils/task';
 import type { Task } from '../../types/task';
 import { spacing } from '../../theme/spacing';
 
@@ -38,13 +38,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const formatDueDate = (date: string): string =>
   formatDateOnly(date, { day: 'numeric', month: 'short' });
-
-const formatFullDate = (iso: string): string =>
-  new Date(iso).toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 
 export default function TaskCard({
   task,
@@ -237,7 +230,7 @@ export default function TaskCard({
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.subtext }]}>Создано</Text>
             <Text style={[styles.detailValue, { color: colors.text }]}>
-              {formatFullDate(task.createdAt)}
+              {formatIsoDate(task.createdAt)}
             </Text>
           </View>
           {onEdit || onDelete ? (

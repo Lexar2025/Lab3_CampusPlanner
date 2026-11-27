@@ -64,6 +64,24 @@ export function formatDateOnly(
   return date.toLocaleDateString('ru-RU', options);
 }
 
+export function formatIsoDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+export function formatIsoDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /** Задача просрочена, если срок закончился и задача ещё не выполнена */
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate) return false;
