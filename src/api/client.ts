@@ -43,10 +43,41 @@ export function isUnauthorizedError(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401;
 }
 
-/** Человекочитаемое сообщение любой ошибки */
+/** Человекочитаемое сообщение ошибки без сырого текста сервера */
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
+  if (error instanceof ApiError) {
+    switch (error.status) {
+      case null:
+        return NETWORK_ERROR;
+      case 400:
+        return 'Проверьте введённые данные.';
+      case 401:
+        return 'Сессия истекла. Войдите снова.';
+      case 403:
+        return 'Нет доступа к этой операции.';
+      case 404:
+        return 'Запись не найдена.';
+      case 429:
+        return 'Слишком много запросов. Попробуйте позже.';
+      default:
+        if (error.status !== null && error.status >= 500) {
+          return 'Сервер временно недоступен. Попробуйте позже.';
+        }
+        return UNKNOWN_ERROR;
+    }
   }
   return UNKNOWN_ERROR;
+}
+
+/** Сообщение об ошибке входа без сырого текста сервера */
+export function getLoginErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return 'Неверный логин или пароль.';
+    }
+    if (error.status === 400) {
+      return 'Проверьте логин и пароль.';
+    }
+  }
+  return getErrorMessage(error);
 }

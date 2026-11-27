@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { ApiError } from '../../src/api/http';
+import { getLoginErrorMessage } from '../../src/api/client';
 import AppButton from '../../src/components/ui/AppButton';
 import AppInput from '../../src/components/ui/AppInput';
 import Screen from '../../src/components/ui/Screen';
@@ -49,9 +49,7 @@ export default function LoginScreen() {
       await signIn({ login: trimmedLogin, password });
       setPassword('');
     } catch (error) {
-      setFormError(
-        error instanceof ApiError ? error.message : 'Не удалось войти. Попробуйте ещё раз.',
-      );
+      setFormError(getLoginErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
