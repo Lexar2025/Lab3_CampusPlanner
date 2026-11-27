@@ -33,7 +33,7 @@ export default function TaskStats({ stats }: TaskStatsProps) {
     width: `${progress.value * 100}%`,
   }));
 
-  const cells: Array<{ label: string; value: string }> = [
+  const cells: { label: string; value: string }[] = [
     { label: 'Всего', value: String(stats.total) },
     { label: 'В работе', value: String(stats.active) },
     { label: 'Готово', value: String(stats.completed) },

@@ -16,7 +16,6 @@ export function getTaskStats(tasks: Task[]): TaskStats {
   };
 }
 
-/** Чистая функция — возвращает новый массив, отсортированный high → medium → low */
 export function sortTasksByPriority(tasks: Task[]): Task[] {
   return [...tasks].sort(
     (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority],
@@ -29,7 +28,6 @@ export function filterTasksByStatus(tasks: Task[], status: TaskStatus): Task[] {
 
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** Разбирает YYYY-MM-DD как локальную дату без сдвига часового пояса */
 export function parseDateOnly(value: string): Date | null {
   const match = DATE_ONLY_PATTERN.exec(value.trim());
   if (!match) return null;
@@ -50,7 +48,6 @@ export function parseDateOnly(value: string): Date | null {
   return date;
 }
 
-/** Форматирует YYYY-MM-DD; невалидную строку возвращает как есть */
 export function formatDateOnly(
   value: string,
   options: Intl.DateTimeFormatOptions = {
@@ -82,7 +79,6 @@ export function formatIsoDateTime(iso: string): string {
   });
 }
 
-/** Задача просрочена, если срок закончился и задача ещё не выполнена */
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate) return false;
   if (task.status === 'completed') return false;
@@ -102,7 +98,6 @@ export function isTaskOverdue(task: Task): boolean {
   return endOfDay.getTime() < Date.now();
 }
 
-/** Бонус: поиск по title и subject (регистронезависимый) */
 export function filterTasks(tasks: Task[], query: string): Task[] {
   const q = query.trim().toLowerCase();
   if (!q) return tasks;

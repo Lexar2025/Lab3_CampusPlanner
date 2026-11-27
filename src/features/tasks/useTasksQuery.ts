@@ -7,7 +7,6 @@ import { taskKeys } from './queryKeys';
 
 const NO_SESSION = 'Сессия не найдена.';
 
-/** Список задач с серверным фильтром по статусу */
 export function useTasksQuery(filter: TaskStatusFilter) {
   const { user, accessToken, signOut } = useAuth();
   const userId = user?.id ?? '';
@@ -29,7 +28,6 @@ export function useTasksQuery(filter: TaskStatusFilter) {
   });
 }
 
-/** Полный список без фильтра — для статистики при активном фильтре */
 export function useAllTasksQuery() {
   const { user, accessToken, signOut } = useAuth();
   const userId = user?.id ?? '';
@@ -46,7 +44,6 @@ export function useAllTasksQuery() {
   });
 }
 
-/** Одна задача по идентификатору */
 export function useTaskQuery(id: string | undefined) {
   const { user, accessToken, signOut } = useAuth();
   const userId = user?.id ?? '';

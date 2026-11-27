@@ -8,7 +8,6 @@ import type {
 } from '../types/task';
 import { apiRequest } from './client';
 
-/** Список задач; статус фильтруется на сервере */
 export async function getTasks(
   token: string,
   params?: TaskListParams,
@@ -29,7 +28,6 @@ export async function getTasks(
   return data.items;
 }
 
-/** Одна задача по идентификатору */
 export async function getTaskById(
   id: string,
   token: string,
@@ -44,7 +42,6 @@ export async function getTaskById(
   return data.item;
 }
 
-/** Создание задачи */
 export async function createTask(
   input: CreateTaskInput,
   token: string,
@@ -59,7 +56,6 @@ export async function createTask(
   return data.item;
 }
 
-/** Частичное обновление задачи, включая статус */
 export async function updateTask(
   id: string,
   input: UpdateTaskInput,
@@ -75,7 +71,6 @@ export async function updateTask(
   return data.item;
 }
 
-/** Удаление задачи; сервер отвечает 204 без тела */
 export async function deleteTask(
   id: string,
   token: string,

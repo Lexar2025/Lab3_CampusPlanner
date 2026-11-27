@@ -1,6 +1,5 @@
 import type { TaskStatusFilter } from '../../types/task';
 
-/** Ключи кэша задач; все скоупированы пользователем и фильтром */
 export const taskKeys = {
   all: (userId: string) => ['tasks', userId] as const,
   lists: (userId: string) => ['tasks', userId, 'list'] as const,

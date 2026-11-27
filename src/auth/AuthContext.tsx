@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await removeToken();
     } catch {
-      // Даже если хранилище недоступно, состояние сессии нужно очистить.
     }
     setUser(null);
     setAccessToken(null);
@@ -71,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error instanceof ApiError && error.status === 401) {
           await clearSessionOn401();
         } else {
-          // Сеть или 5xx: токен сохраняем, чтобы сессия восстановилась позже.
           setAuthNotice(SESSION_CHECK_ERROR);
         }
       } finally {
@@ -101,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await removeToken();
     } catch {
-      // Ошибка удаления не должна оставлять пользователя в «авторизованном» состоянии.
     }
     setAccessToken(null);
     setUser(null);

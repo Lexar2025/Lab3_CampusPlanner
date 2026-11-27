@@ -1,6 +1,5 @@
 import type { TaskPriority } from '../types/task';
 
-/** Порядок для сортировки (меньше число → выше приоритет) */
 export const PRIORITY_ORDER: Record<TaskPriority, number> = {
   high: 0,
   medium: 1,

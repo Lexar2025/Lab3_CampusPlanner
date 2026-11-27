@@ -62,7 +62,6 @@ export function TasksUiProvider({ children }: { children: ReactNode }) {
 
   const pendingRef = useRef<Map<string, PendingEntry>>(new Map());
 
-  /** Переносит текущую Map в состояние; вызывается только вне рендера. */
   const syncPendingState = useCallback(() => {
     const entries = Array.from(pendingRef.current.values());
     setPendingIds(new Set(entries.map((entry) => entry.task.id)));
@@ -139,14 +138,12 @@ export function TasksUiProvider({ children }: { children: ReactNode }) {
   const undoDelete = useCallback(
     (id: string) => {
       const entry = pendingRef.current.get(id);
-      // После отправки DELETE отмена уже ничего не вернёт на сервере.
       if (!entry || entry.deleting) return;
       removePending(id);
     },
     [removePending],
   );
 
-  // Выход из аккаунта: таймеры не доживают, а ожидающие удаления уходят сразу.
   useEffect(() => {
     const entries = pendingRef.current;
     return () => {

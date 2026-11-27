@@ -6,10 +6,8 @@ import { spacing } from '../../theme/spacing';
 
 interface ScreenProps {
   children: ReactNode;
-  /** Внутренние отступы 16px (по умолчанию true). Выключайте, когда внутри FlatList. */
   padded?: boolean;
   style?: ViewStyle;
-  /** Ограничить safe-area только нижней стороной — актуально, когда сверху Stack-header */
   bottomOnlySafe?: boolean;
 }
 

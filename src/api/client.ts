@@ -5,10 +5,6 @@ const NETWORK_ERROR =
 const INVALID_RESPONSE_ERROR = 'Сервер вернул некорректный ответ. Попробуйте ещё раз.';
 const UNKNOWN_ERROR = 'Не удалось выполнить запрос. Попробуйте ещё раз.';
 
-/**
- * Запрос к Campus API с токеном и разбором JSON.
- * 204 возвращает undefined; сетевая ошибка и битый JSON превращаются в ApiError.
- */
 export async function apiRequest<T>(
   path: string,
   token: string,
@@ -38,12 +34,10 @@ export async function apiRequest<T>(
   }
 }
 
-/** Ошибка означает недействительную сессию */
 export function isUnauthorizedError(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401;
 }
 
-/** Человекочитаемое сообщение ошибки без сырого текста сервера */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     switch (error.status) {
@@ -69,7 +63,6 @@ export function getErrorMessage(error: unknown): string {
   return UNKNOWN_ERROR;
 }
 
-/** Сообщение об ошибке входа без сырого текста сервера */
 export function getLoginErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {

@@ -1,7 +1,6 @@
 import type { LoginInput, LoginResponse, User, UserResponse } from '../types/auth';
 import { API_BASE_URL, ApiError, authorizedFetch, readErrorMessage } from './http';
 
-/** Вход по логину и паролю; пароль нигде не сохраняется и не логируется */
 export async function signIn(credentials: LoginInput): Promise<LoginResponse> {
   let response: Response;
 
@@ -28,7 +27,6 @@ export async function signIn(credentials: LoginInput): Promise<LoginResponse> {
   return (await response.json()) as LoginResponse;
 }
 
-/** Текущий пользователь по сохранённому токену */
 export async function getCurrentUser(
   token: string,
   onUnauthorized?: () => void | Promise<void>,

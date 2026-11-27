@@ -12,7 +12,6 @@ import { taskKeys } from './queryKeys';
 
 const NO_SESSION = 'Сессия не найдена.';
 
-/** Создание задачи; после успеха инвалидирует все задачи пользователя */
 export function useCreateTask() {
   const { user, accessToken, signOut } = useAuth();
   const queryClient = useQueryClient();
@@ -32,7 +31,6 @@ export function useCreateTask() {
   });
 }
 
-/** Редактирование задачи; после успеха инвалидирует все задачи пользователя */
 export function useUpdateTask() {
   const { user, accessToken, signOut } = useAuth();
   const queryClient = useQueryClient();
@@ -62,10 +60,6 @@ interface ToggleContext {
   detailSnapshot: Task | undefined;
 }
 
-/**
- * Смена статуса: оптимистично во всех кэшах, при ошибке — откат,
- * затем инвалидация, чтобы сервер стал источником истины.
- */
 export function useToggleTaskStatus() {
   const { user, accessToken, signOut } = useAuth();
   const queryClient = useQueryClient();
